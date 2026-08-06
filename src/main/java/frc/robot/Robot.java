@@ -13,7 +13,6 @@
 
 package frc.robot;
 
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Threads;
@@ -46,7 +45,6 @@ public class Robot extends LoggedRobot {
     private ObstacleAvoidance obstacles;
     private SS superstructure;
     private ControlScheme controls;
-
 
     @Override
     public void robotInit() {
@@ -126,7 +124,6 @@ public class Robot extends LoggedRobot {
 
         PerfTracker.periodic();
         Threads.setCurrentThreadPriority(false, 10);
-
     }
 
     @Override
@@ -170,7 +167,6 @@ public class Robot extends LoggedRobot {
     @Override
     public void simulationPeriodic() {
     }
-
     
     public void instantiateSubsystems() {
         elevator = Elevator.getInstance();

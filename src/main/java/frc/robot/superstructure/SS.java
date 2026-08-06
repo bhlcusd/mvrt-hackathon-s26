@@ -61,7 +61,6 @@ public class SS extends SubsystemBase<SS.Command> {
         setCommand(Command.IDLE);
     }
 
-
     public void enable(Flag flag) {
         flags.add(flag);
     }
