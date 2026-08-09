@@ -18,8 +18,17 @@ public class Arm2d {
 	public Arm2d(String name, Color8Bit color) {
 		this.name = name;
 
-		// TODO: Init logged mechanisms
-		// First init mech, then get the root from mech, then add ligaments onto root
+		this.mech = new LoggedMechanism2d(2, 2);
+		this.root = mech.getRoot("root", 0.5, 1);
+		this.arm = root.append(new LoggedMechanismLigament2d("armSeg1", 0.62, 90, 5, color));
+	}
+
+	public void setLength(double length) {
+		arm.setLength(length);
+	}
+
+	public void setAngle(double angle) {
+		arm.setAngle(angle);
 	}
 	
 	public void periodic() {
