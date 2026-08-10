@@ -10,7 +10,7 @@ import frc.robot.devices.motor.MotorConfig;
 import frc.robot.subsystems.SubsystemBase;
 import frc.robot.util.Util;
 
-// NOTE: Arm extending works based off of this: the seg 3 extends first then seg 2. Seg 2 collapses before seg 3
+// NOTE: Arm extending works based off of this: the seg 3 extends first then seg 2. Seg 2 collapses before seg 3, but this doesn't matter in terms of code since we aren't tracking what segments are extended or not
 // NOTE: Also, both motors spin in the same direction, having the same adjacent gear
 
 // TODO: getPosition should return meters or radians depending on if the gear ratio is set. Figure out how you can get the correct rotations for the arm angle. Also remember to set the METERS PER ROTATION when configuring the extendConfig
@@ -30,7 +30,8 @@ public class Arm extends SubsystemBase<Arm.Command> {
 
 	private double targetLength_m;
 	private double targetAngle_deg;
-	private double targetVolts_v;
+	private double targetExtendVolts_v;
+	private double targetRotateVolts_v;
 
 	public enum Command {
 		DISABLED,
@@ -39,11 +40,9 @@ public class Arm extends SubsystemBase<Arm.Command> {
 		MANUAL
 	}
 
-	// Represents the intended level the arm should extend/contract to
 	private enum Travel {
-		SEGMENT_1,
-		SEGMENT_2,
-		SEGMENT_3
+		MOVING,
+		HOLDING
 	}
 
 	public static Arm getInstance() {
@@ -110,8 +109,37 @@ public class Arm extends SubsystemBase<Arm.Command> {
 				rotateLeftMotor.setVoltage(0);
 				rotateRightMotor.setVoltage(0);
 			case TRAVEL:
+				if (firstLoop()) {
+					setSubstate(Travel.MOVING);
+				}
+
+				// This could be improved upon to be more granular in the substate (especially to see what MIGHT be holding up MOVING)
+				// but that would mean that we would:
+				//	1. Have multiple substate enums to make it rotate and extend simultaniously (but that's not possible)
+				//	2. Add a ROTATE and EXTEND substates (but that would make it rotate or extend, not both)
+				rotateLeftMotor.setMotionMagic(targetAngle_deg);
+				rotateRightMotor.setMotionMagic(targetAngle_deg);
+				extendMotor.setMotionMagic(targetLength_m);
+
+				switch ((Travel) getSubstate()) {
+					case MOVING:
+						if (atRotationTarget() && atExtendTarget()) {
+							setSubstate(Travel.HOLDING);
+						}
+						break;
+					case HOLDING:
+						if (!atRotationTarget() || !atExtendTarget()) {
+							setSubstate(Travel.MOVING);
+						}
+						break;
+					default:
+						break;
+				}
 				break;
 			case MANUAL:
+				rotateLeftMotor.setVoltage(targetRotateVolts_v);
+				rotateRightMotor.setVoltage(targetRotateVolts_v);
+				extendMotor.setVoltage(targetExtendVolts_v);
 				break;
 			default:
 				break;
@@ -133,17 +161,40 @@ public class Arm extends SubsystemBase<Arm.Command> {
 		Logger.recordOutput("Arm/TargetAngle_deg", targetAngle_deg);
 	}
 
-	public void idle() {
-		setCommand(Command.IDLE);
-	}
-
 	public void disable() {
 		setCommand(Command.DISABLED);
 	}
 
-	public void manual(double volts) {
-		this.targetVolts_v = volts;
+	public void idle() {
+		setCommand(Command.IDLE);
+	}
+
+	public void moveTo(double length, double angle) {
+		this.targetLength_m = length;
+		this.targetAngle_deg = angle;
+		setCommand(Command.TRAVEL);
+	}
+
+	public void moveToLength(double length) {
+		moveTo(length, this.targetAngle_deg);
+	}
+
+	public void moveToAngle(double angle) {
+		moveTo(this.targetLength_m, angle);
+	}
+
+	public void manual(double extendVolts, double rotateVolts) {
+		this.targetExtendVolts_v = extendVolts;
+		this.targetRotateVolts_v = rotateVolts;
 		setCommand(Command.MANUAL);
+	}
+
+	public void manualExtend(double extendVolts) {
+		manual(extendVolts, this.targetRotateVolts_v);
+	}
+
+	public void manualRotate(double rotateVolts) {
+		manual(this.targetExtendVolts_v, rotateVolts);
 	}
 
 	public double getLength() {

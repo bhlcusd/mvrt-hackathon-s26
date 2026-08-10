@@ -16,8 +16,9 @@ public class ArmConstants {
 	
 	public static final String CANBUS = TunerConstants.kCANBus.getName();
 	public static final boolean BRAKE = true;
-
 	public static final double[] SEGMENT_MOI_kgm2 = {0.146, 0.47, 1.373};
+	// We could change this to instead return a predicted MOI value at a given length instead of pre-calculated MOI
+	// MOI should be similar to a rod (ie. equation should be quadratic - rod: 1/12 * m * l^2), but IDK about the SIM MOI provided since that must be a constant
 
 	// PID
 	public static final double kRotateP = 0;
@@ -37,7 +38,7 @@ public class ArmConstants {
 	public static final double kExtendS = 0;
 
 	public static final GravityType ROTATE_GRAVITY_TYPE = GravityType.ARM;
-	public static final GravityType EXTEND_GRAVITY_TYPE = GravityType.NONE;
+	public static final GravityType EXTEND_GRAVITY_TYPE = GravityType.ELEVATOR;
 
 	// Gear ratios
 	public static final double ROTATE_GEAR_RATIO = 7.5;
@@ -48,9 +49,9 @@ public class ArmConstants {
 	public static final double ROTATE_ACCELERATION_rps2 = 2.26;
 	public static final double ROTATE_JERK_rps3 = 34.02;
 
-	public static final double EXTEND_CRUISE_VELOCITY_mps = ;
-	public static final double EXTEND_ACCELERATION_mps2 = ;
-	public static final double EXTEND_JERK_mps3 = ;
+	public static final double EXTEND_CRUISE_VELOCITY_mps = 0;
+	public static final double EXTEND_ACCELERATION_mps2 = 0;
+	public static final double EXTEND_JERK_mps3 = 0;
 
 	// Tolerances
 	public static final double LENGTH_TOLERANCE_m = 0.05;
