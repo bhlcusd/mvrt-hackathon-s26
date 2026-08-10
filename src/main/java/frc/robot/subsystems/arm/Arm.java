@@ -8,7 +8,6 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.devices.motor.Motor;
 import frc.robot.devices.motor.MotorConfig;
 import frc.robot.subsystems.SubsystemBase;
-import frc.robot.util.Util;
 
 // NOTE: Arm extending works based off of this: the seg 3 extends first then seg 2. Seg 2 collapses before seg 3, but this doesn't matter in terms of code since we aren't tracking what segments are extended or not
 // NOTE: Also, both motors spin in the same direction, having the same adjacent gear
@@ -218,10 +217,10 @@ public class Arm extends SubsystemBase<Arm.Command> {
 	}
 
 	public boolean atRotationTarget() {
-		return Util.inRange(getAngle(), MIN_ANGLE_deg, MAX_ANGLE_deg);
+		return Math.abs(targetAngle_deg - getAngle()) < ANGLE_TOLERANCE_deg;
 	}
 
 	public boolean atExtendTarget() {
-		return Util.inRange(getLength(), MIN_LENGTH_m, MAX_LENGTH_m);
+		return Math.abs(targetLength_m - getLength()) < LENGTH_TOLERANCE_m;
 	}
 }
