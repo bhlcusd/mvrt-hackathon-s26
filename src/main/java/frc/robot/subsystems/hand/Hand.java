@@ -2,19 +2,35 @@ package frc.robot.subsystems.hand;
 
 import static frc.robot.subsystems.hand.HandConstants.*;
 
+import org.littletonrobotics.junction.Logger;
+
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.devices.motor.Motor;
 import frc.robot.devices.motor.MotorConfig;
 import frc.robot.subsystems.SubsystemBase;
 
 public class Hand extends SubsystemBase<Hand.Command> {
 	public enum Command {
-		DISABLED,
-		IDLE
+		DISABLE,
+		IDLE,
+		MANUAL,
+		TRAVEL,
+		ZERO
+	}
+
+	private enum Travel {
+		MOVING,
+		HOLDING
 	}
 
 	private static Hand instance;
 
 	private Motor motor;
+
+	private Hand2d hand2d = new Hand2d("Hand2d", new Color8Bit(255, 0, 0));
+
+	private double targetAngle_deg;
+	private double targetVolts_v;
 
 	public static Hand getInstance() {
 		if (instance == null) {
@@ -27,10 +43,18 @@ public class Hand extends SubsystemBase<Hand.Command> {
 	private Hand() {
 		super("Hand");
 
-		// TODO: Set motor config
-		MotorConfig config = new MotorConfig(MOTOR_ID);
+		MotorConfig config = new MotorConfig(MOTOR_ID)
+			.withCanbus(CANBUS)
+			.withBrake(BRAKE)
+			.withSensorToMechanismRatio(GEAR_RATIO)
+			.withFFGains(kS, kV, kA, kG)
+			.withPIDGains(kP, kI, kD, GRAVITY_TYPE)
+			.withMotionMagic(CRUISE_VELOCITY_rps, ACCELERATION_rps2, JERK_rps3)
+			.withSim(MOTOR, GEAR_RATIO, SIM_MOI_kgm2);
 
 		this.motor = new Motor("Hand/Motor", config);
+
+		setCommand(Command.IDLE);
 	}
 
 	@Override
@@ -41,11 +65,39 @@ public class Hand extends SubsystemBase<Hand.Command> {
 	@Override
 	protected void handle() {
 		switch (getCommand()) {
-			case DISABLED:
+			case DISABLE:
 				motor.stop();
 				break;
 			case IDLE:
 				motor.setVoltage(0);
+				break;
+			case MANUAL:
+				motor.setVoltage(targetVolts_v);
+				break;
+			case TRAVEL:
+				motor.setMotionMagic(targetAngle_deg);
+
+				switch ((Travel) getSubstate()) {
+					case MOVING:
+						if (atAngleTarget()) {
+							setSubstate(Travel.HOLDING);
+						}
+						break;
+					case HOLDING:
+						if (!atAngleTarget()) {
+							setSubstate(Travel.MOVING);
+						}
+						break;
+					default:
+						break;
+				}
+				break;
+			case ZERO:
+				motor.setMotionMagic(ZERO_deg);
+
+				if (Math.abs(ZERO_deg - getAngle()) < TOLERANCE_deg) {
+					setCommand(Command.IDLE);
+				}
 				break;
 			default:
 				break;
@@ -54,6 +106,52 @@ public class Hand extends SubsystemBase<Hand.Command> {
 
 	@Override
 	protected void outputPeriodic() {
-		// TODO: Update 2d with new inputs from motor, call their periodic, and log info
+		hand2d.update(getAngle());
+		hand2d.periodic();
+
+		Logger.recordOutput("Arm/Angle_deg", getAngle());
+		Logger.recordOutput("Arm/Velocity_dps", getVelocity());
+		Logger.recordOutput("Arm/TargetAngle_deg", targetAngle_deg); 
+	}
+
+	public void disable() {
+		setCommand(Command.DISABLE);
+	}
+
+	public void idle() {
+		setCommand(Command.IDLE);
+	}
+
+	public void manual(double volts) {
+		this.targetVolts_v = volts;
+		setCommand(Command.MANUAL);
+	}
+
+	public void intake(double delta) {
+		this.targetAngle_deg = getAngle() + delta;
+		setCommand(Command.TRAVEL);
+		setSubstate(Travel.MOVING); 
+	}
+
+	public void expel(double delta) {
+		this.targetAngle_deg = getAngle() - delta;
+		setCommand(Command.TRAVEL);
+		setSubstate(Travel.MOVING);
+	}
+
+	public void zero() {
+		setCommand(Command.ZERO);
+	}
+
+	public double getAngle() {
+		return motor.getPosition();
+	}
+
+	public double getVelocity() {
+		return motor.getVelocity();
+	}
+
+	public boolean atAngleTarget() {
+		return Math.abs(targetAngle_deg - getAngle()) < TOLERANCE_deg;
 	}
 }
