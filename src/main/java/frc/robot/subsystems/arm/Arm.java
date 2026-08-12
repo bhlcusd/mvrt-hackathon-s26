@@ -107,6 +107,7 @@ public class Arm extends SubsystemBase<Arm.Command> {
 			case IDLE:
 				rotateLeftMotor.setVoltage(0);
 				rotateRightMotor.setVoltage(0);
+				break;
 			case TRAVEL:
 				if (firstLoop()) {
 					setSubstate(Travel.MOVING);
@@ -114,7 +115,7 @@ public class Arm extends SubsystemBase<Arm.Command> {
 
 				// This could be improved upon to be more granular in the substate (especially to see what MIGHT be holding up MOVING)
 				// but that would mean that we would:
-				//	1. Have multiple substate enums to make it rotate and extend simultaniously (but that's not possible)
+				//	1. Have multiple substate enums to make it rotate and extend simultaniously (but how would we know what substate it's in without logic in Arm?)
 				//	2. Add a ROTATE and EXTEND substates (but that would make it rotate or extend, not both)
 				rotateLeftMotor.setMotionMagic(targetAngle_deg);
 				rotateRightMotor.setMotionMagic(targetAngle_deg);
