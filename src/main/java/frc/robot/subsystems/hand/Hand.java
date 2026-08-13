@@ -127,14 +127,14 @@ public class Hand extends SubsystemBase<Hand.Command> {
 		setCommand(Command.MANUAL);
 	}
 
-	public void intake(double delta) {
-		this.targetAngle_deg = getAngle() + delta;
+	public void intake(double delta_deg) {
+		this.targetAngle_deg = getAngle() + delta_deg;
 		setCommand(Command.TRAVEL);
 		setSubstate(Travel.MOVING); 
 	}
 
-	public void expel(double delta) {
-		this.targetAngle_deg = getAngle() - delta;
+	public void expel(double delta_deg) {
+		this.targetAngle_deg = getAngle() - delta_deg;
 		setCommand(Command.TRAVEL);
 		setSubstate(Travel.MOVING);
 	}

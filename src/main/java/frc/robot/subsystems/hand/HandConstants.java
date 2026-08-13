@@ -43,4 +43,10 @@ public class HandConstants {
 	// Sim
 	public static final DCMotor MOTOR = DCMotor.getFalcon500Foc(1);
 	public static final double SIM_MOI_kgm2 = 0;
+
+	// Manual
+	public static final double MANUAL_VOLTS_v = 2;
+
+	// Scoring
+	public static final double[] SCORING_ANGLES = {};
 }

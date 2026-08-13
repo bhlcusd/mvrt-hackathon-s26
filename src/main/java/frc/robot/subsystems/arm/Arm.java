@@ -224,4 +224,8 @@ public class Arm extends SubsystemBase<Arm.Command> {
 	public boolean atExtendTarget() {
 		return Math.abs(targetLength_m - getLength()) < LENGTH_TOLERANCE_m;
 	}
+
+	public boolean atTarget() {
+		return atRotationTarget() && atExtendTarget();
+	}
 }

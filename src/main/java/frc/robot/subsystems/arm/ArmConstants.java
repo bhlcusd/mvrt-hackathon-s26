@@ -66,11 +66,21 @@ public class ArmConstants {
 	// These angles are read as if the arm is 90 degress when pointing upwards.
 	// Technically the values can be smaller due to changes in arm length, but these
 	// are measured with the shortest arm length.
-	public static final int MIN_ANGLE_deg = 20;
-	public static final int MAX_ANGLE_deg = 160;
+	public static final double STOW_ANGLE_deg = 90;
+	public static final double MIN_ANGLE_deg = 20;
+	public static final double MAX_ANGLE_deg = 160;
 
 	// Sim
 	public static final DCMotor ROTATE_SIM_MOTORS = DCMotor.getFalcon500Foc(2);
 	public static final DCMotor EXTEND_SIM_MOTOR = DCMotor.getFalcon500Foc(1);
 	public static final double SIM_MOI_kgm2 = Arrays.stream(SEGMENT_MOI_kgm2).average().orElse(0.146);
+
+	// Manual
+	public static final double MANUAL_ROTATE_VOLTS_v = 2;
+	public static final double MANUAL_EXTEND_VOLTS_v = 2;
+
+	// Scoring
+	public static final double[] SCORING_LENGTHS = {};
+	public static final double[] SCORING_ANGLES = {};
+
 }

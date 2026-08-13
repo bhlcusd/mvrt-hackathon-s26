@@ -8,15 +8,19 @@ import frc.robot.superstructure.SS;
 import frc.robot.superstructure.SS.Flag;
 import frc.robot.util.Util;
 
-
 public class ControlScheme {
 
     private final SS ss;
     private final Drive drive;
 
+    private int scoring;
+    private static final int SCORING_MAX = 3;
+    private static final Flag[] SCORING_FLAGS = {Flag.SCORE_LOW, Flag.SCORE_MED, Flag.SCORE_HIGH};
+
     public ControlScheme(SS ss, Drive drive) {
         this.ss = ss;
         this.drive = drive;
+        this.scoring = 0;
     }
 
     public void init() {
@@ -43,11 +47,26 @@ public class ControlScheme {
             drive.setPathingOverride(PathingOverride.NONE);
         }
 
-        ss.set(Flag.HOME, OI.DR.getBackButton());
-        ss.set(Flag.MANUAL_UP, OI.DR.getAButton());
-        ss.set(Flag.MANUAL_DOWN, OI.DR.getBButton());
-        ss.set(Flag.SCORE_LOW, OI.DR.getXButton());
-        ss.set(Flag.SCORE_HIGH, OI.DR.getYButton());
+        // Input mapping (for my broken controller)
+        // Right Bumper - 8
+        // A - 1
+        // B - 2
+        // X - 4
+        // Y - 5
+        // Hamburger Menu - 12
+        // Mirror - 7
+        // Right joystick button - 9
 
+        // Check right bumper to increase the scoring value
+        if (OI.DR.getRawButtonPressed(8)) {
+            scoring = (scoring + 1) % SCORING_MAX;
+        }
+
+        ss.set(Flag.DISABLE, OI.DR.getRawButton(7));
+        ss.set(Flag.IDLE, OI.DR.getRawButton(1));
+        ss.set(Flag.MANUAL, OI.DR.getRawButton(2));
+        ss.set(Flag.INTAKE, OI.DR.getRawButton(4));
+        ss.set(SCORING_FLAGS[scoring], OI.DR.getRawButton(5));
+        ss.set(Flag.STOW, OI.DR.getRawButton(9));
     }
 }

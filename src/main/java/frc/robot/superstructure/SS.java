@@ -1,10 +1,13 @@
 package frc.robot.superstructure;
 
-import frc.robot.ControlScheme;
 import frc.robot.subsystems.SubsystemBase;
+import frc.robot.subsystems.arm.Arm;
+import frc.robot.subsystems.arm.ArmConstants;
 import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.elevator.Elevator;
-import frc.robot.subsystems.elevator.ElevatorConstants;
+import frc.robot.subsystems.hand.Hand;
+import frc.robot.subsystems.hand.HandConstants;
+import frc.robot.subsystems.tracking.Tracking;
+import frc.robot.subsystems.vision.Vision;
 
 import java.util.EnumSet;
 
@@ -13,39 +16,55 @@ import org.littletonrobotics.junction.Logger;
 public class SS extends SubsystemBase<SS.Command> {
 
     public enum Flag {
-        HOME,
+        DISABLE,
+        IDLE,
+        STOW,
+        MANUAL,
+        INTAKE,
         SCORE_LOW,
+        SCORE_MED,
         SCORE_HIGH,
-        MANUAL_UP,
-        MANUAL_DOWN
     }
 
     public enum Command {
+        DISABLE,
         IDLE,
-        HOMING,
-        STOWING,
+        MANUAL,
+        INTAKE,
         SCORING,
-        MANUAL
+        STOWING,
+    }
+
+    private enum Manual {
+        ARM_ROTATE,
+        ARM_EXTEND,
+        HAND_INTAKE,
+        HAND_EXPEL
     }
 
     private enum Scoring {
-        RAISING,
+        TRAVELING,
         SETTLING,
         READY
     }
 
-    private static final double MANUAL_VOLTS = 2.0;
-    private static final double SCORE_LOW_HEIGHT_m = 1.2;
     private static final double SETTLE_TIME_s = 0.2;
-
-    private static SS instance;
 
     private final EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
 
-    private final Elevator elevator;
+    private static SS instance;
+    
+    private final Arm arm;
+    private final Hand hand;
     private final Drive drive;
+    private final Vision vision;
+    private final Tracking tracking;
 
-    private double scoreTarget_m = ElevatorConstants.MIN_HEIGHT_m;
+    private int manualDirection;
+
+    private double armAngleTarget_deg;
+    private double armLengthTarget_m;
+    private double handAngle_deg;
 
     public static SS getInstance() {
         if (instance == null) {
@@ -56,10 +75,163 @@ public class SS extends SubsystemBase<SS.Command> {
 
     private SS() {
         super("Superstructure");
-        elevator = Elevator.getInstance();
+
+        arm = Arm.getInstance();
+        hand = Hand.getInstance();
         drive = Drive.getInstance();
+        vision = Vision.getInstance();
+        tracking = Tracking.getInstance();
+
+        this.manualDirection = 1;
+
         setCommand(Command.IDLE);
     }
+
+    @Override
+    protected void inputPeriodic() {}
+
+    @Override
+    protected void handle() {
+        handleFlags();
+
+        switch (getCommand()) {
+            case DISABLE:
+                arm.disable();
+                hand.disable();
+                vision.disable();
+                tracking.disable();
+            case IDLE:
+                arm.idle();
+                hand.idle();
+                vision.enable();
+                tracking.enable();
+                break;
+            case MANUAL:
+                handleManual();
+                break;
+            case SCORING:
+                handleScoring();
+                break;
+            case STOWING:
+                arm.moveTo(ArmConstants.MIN_LENGTH_m, ArmConstants.STOW_ANGLE_deg);
+                hand.idle();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void handleFlags() {
+        if (has(Flag.DISABLE)) {
+            setCommand(Command.DISABLE);
+        } else if (has(Flag.IDLE)) {
+            setCommand(Command.IDLE);
+        } else if (has(Flag.MANUAL)) {
+            setCommand(Command.MANUAL);
+        } else if (has(Flag.SCORE_LOW) || has(Flag.SCORE_MED) || has(Flag.SCORE_HIGH)) {
+            setCommand(Command.SCORING);
+        }
+    }
+
+    private void handleManual() {
+        switch ((Manual) getSubstate()) {
+            case ARM_EXTEND:
+                arm.manualExtend(manualDirection * ArmConstants.MANUAL_EXTEND_VOLTS_v);
+                break;
+            case ARM_ROTATE:
+                arm.manualRotate(manualDirection * ArmConstants.MANUAL_ROTATE_VOLTS_v);
+                break;
+            case HAND_EXPEL:
+                if (manualDirection < 0) {
+                    toggleDirection();
+                }
+
+                hand.manual(manualDirection * HandConstants.MANUAL_VOLTS_v);
+                break;
+            case HAND_INTAKE:
+                if (manualDirection > 0) {
+                    toggleDirection();
+                }
+
+                hand.manual(manualDirection * HandConstants.MANUAL_VOLTS_v);
+                break;
+            default:
+                // A ClassCastException would be thrown if the substate was not Manual, so no need to intervene here
+                break;
+        }
+    }
+
+    private void toggleDirection() {
+        this.manualDirection = -this.manualDirection;
+    }
+
+    private void handleScoring() {
+        if (firstLoop()) {
+            setSubstate(Scoring.TRAVELING);
+        }
+
+        handleTargets();
+
+        switch ((Scoring) getSubstate()) {
+            case TRAVELING:
+                arm.moveTo(armLengthTarget_m, armAngleTarget_deg);
+
+                if (arm.atTarget()) {
+                    setSubstate(Scoring.SETTLING);   
+                }
+                break;
+            case SETTLING:
+                arm.moveTo(armLengthTarget_m, armAngleTarget_deg);
+                
+                if (!arm.atTarget()) {
+                    setSubstate(Scoring.TRAVELING);    
+                } else if (substateElapsed(SETTLE_TIME_s)) {
+                    setSubstate(Scoring.READY);  
+                }
+                break;
+            case READY:
+                arm.moveTo(armLengthTarget_m, armAngleTarget_deg);
+                hand.expel(handAngle_deg);
+
+                if (!arm.atTarget()) {
+                    setSubstate(Scoring.TRAVELING);   
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Updates the current targets based on the current flag, accessing values from subsystem constant class's arrays.
+     * 
+     * Dev note: This isn't the best system, but without modifying how flags work, it's the best for what the current
+     * handle() system needs. Besides, this project is pretty minor in scope, with only the Arm and Hand subsystems
+     * needing their own custom implementations.
+     */
+    private void handleTargets() {
+        int index = -1;
+
+        if (has(Flag.SCORE_LOW)) {
+            index = 0;
+        } else if (has(Flag.SCORE_MED)) {
+            index = 1;
+        } else if (has(Flag.SCORE_HIGH)) {
+            index = 2;
+        }
+
+        this.armAngleTarget_deg = ArmConstants.SCORING_ANGLES[index];
+        this.armLengthTarget_m = ArmConstants.SCORING_LENGTHS[index];
+        this.handAngle_deg = HandConstants.SCORING_ANGLES[index];
+    }
+
+    @Override
+    protected void outputPeriodic() {
+        String[] active = flags.stream().map(Enum::name).toArray(String[]::new);
+        Logger.recordOutput("Superstructure/Flags", active);
+    }
+
+    // INFO: The following are methods to handle flags. Do not modify!
 
     public void enable(Flag flag) {
         flags.add(flag);
@@ -83,81 +255,5 @@ public class SS extends SubsystemBase<SS.Command> {
 
     public boolean has(Flag flag) {
         return flags.contains(flag);
-    }
-
-    @Override
-    protected void inputPeriodic() {
-        
-    }
-
-    @Override
-    protected void handle() {
-        if (has(Flag.HOME)) {
-            setCommand(Command.HOMING);
-        } else if (has(Flag.MANUAL_UP) || has(Flag.MANUAL_DOWN)) {
-            setCommand(Command.MANUAL);
-        } else if (has(Flag.SCORE_HIGH)) {
-            scoreTarget_m = ElevatorConstants.MAX_HEIGHT_m;
-            setCommand(Command.SCORING);
-        } else if (has(Flag.SCORE_LOW)) {
-            scoreTarget_m = SCORE_LOW_HEIGHT_m;
-            setCommand(Command.SCORING);
-        } else {
-            setCommand(Command.STOWING);
-        }
-
-        switch (getCommand()) {
-            case HOMING:
-                elevator.home();
-                break;
-            case MANUAL:
-                elevator.manual(has(Flag.MANUAL_UP) ? MANUAL_VOLTS : -MANUAL_VOLTS);
-                break;
-            case SCORING:
-                handleScoring();
-                break;
-            case STOWING:
-                elevator.trackToHeight(ElevatorConstants.MIN_HEIGHT_m);
-                break;
-            case IDLE:
-                break;
-        }
-    }
-
-    private void handleScoring() {
-        if (firstLoop()) {
-            setSubstate(Scoring.RAISING);
-        }
-
-        switch ((Scoring) getSubstate()) {
-            case RAISING:
-                elevator.trackToHeight(scoreTarget_m);
-                if (elevator.atTarget(ElevatorConstants.TOLERANCE_m)) {
-                    setSubstate(Scoring.SETTLING);   
-                }
-                break;
-
-            case SETTLING:
-                elevator.trackToHeight(scoreTarget_m);
-                if (!elevator.atTarget(ElevatorConstants.TOLERANCE_m)) {
-                    setSubstate(Scoring.RAISING);    
-                } else if (substateElapsed(SETTLE_TIME_s)) {
-                    setSubstate(Scoring.READY);    
-                }
-                break;
-
-            case READY:
-                elevator.trackToHeight(scoreTarget_m);
-                if (!elevator.atTarget(ElevatorConstants.TOLERANCE_m)) {
-                    setSubstate(Scoring.RAISING);   
-                }
-                break;
-        }
-    }
-
-    @Override
-    protected void outputPeriodic() {
-        String[] active = flags.stream().map(Enum::name).toArray(String[]::new);
-        Logger.recordOutput("Superstructure/Flags", active);
     }
 }
