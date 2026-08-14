@@ -6,6 +6,7 @@ import frc.robot.subsystems.drive.PathingOverride;
 import frc.robot.subsystems.drive.SwerveInput;
 import frc.robot.superstructure.SS;
 import frc.robot.superstructure.SS.Flag;
+import frc.robot.superstructure.SS.Manual;
 import frc.robot.util.Util;
 
 public class ControlScheme {
@@ -16,6 +17,10 @@ public class ControlScheme {
     private int scoring;
     private static final int SCORING_MAX = 3;
     private static final Flag[] SCORING_FLAGS = {Flag.SCORE_LOW, Flag.SCORE_MED, Flag.SCORE_HIGH};
+
+    private int manual;
+    private static final int MANUAL_MAX = 4;
+    private static final Manual[] MANUAL_MODES = {Manual.ARM_ROTATE, Manual.ARM_EXTEND, Manual.HAND_INTAKE, Manual.HAND_EXPEL};
 
     public ControlScheme(SS ss, Drive drive) {
         this.ss = ss;
@@ -48,7 +53,8 @@ public class ControlScheme {
         }
 
         // Input mapping (for my broken controller)
-        // Right Bumper - 8
+        // Left bumper - 7
+        // Right bumper - 8
         // A - 1
         // B - 2
         // X - 4
@@ -57,14 +63,19 @@ public class ControlScheme {
         // Mirror - 7
         // Right joystick button - 9
 
+        // Check left bumper to increase Manual value
+        if (OI.DR.getRawButtonPressed(7)) {
+
+        }
+
         // Check right bumper to increase the scoring value
         if (OI.DR.getRawButtonPressed(8)) {
-            scoring = (scoring + 1) % SCORING_MAX;
+            scoring = Math.abs(scoring + 1) % SCORING_MAX;
         }
 
         ss.set(Flag.DISABLE, OI.DR.getRawButton(7));
         ss.set(Flag.IDLE, OI.DR.getRawButton(1));
-        ss.set(Flag.MANUAL, OI.DR.getRawButton(2));
+        ss.setManual(Manual.ARM_EXTEND, OI.DR.getRawButton(2));
         ss.set(Flag.INTAKE, OI.DR.getRawButton(4));
         ss.set(SCORING_FLAGS[scoring], OI.DR.getRawButton(5));
         ss.set(Flag.STOW, OI.DR.getRawButton(9));

@@ -9,10 +9,6 @@ import frc.robot.devices.motor.Motor;
 import frc.robot.devices.motor.MotorConfig;
 import frc.robot.subsystems.SubsystemBase;
 
-// NOTE: Arm extending works based off of this: the seg 3 extends first then seg 2. Seg 2 collapses before seg 3, but this doesn't matter in terms of code since we aren't tracking what segments are extended or not
-// NOTE: Also, both motors spin in the same direction, having the same adjacent gear
-
-// TODO: getPosition should return meters or radians depending on if the gear ratio is set. Figure out how you can get the correct rotations for the arm angle. Also remember to set the METERS PER ROTATION when configuring the extendConfig
 public class Arm extends SubsystemBase<Arm.Command> {
 	
 	private static Arm instance;
@@ -25,7 +21,7 @@ public class Arm extends SubsystemBase<Arm.Command> {
 	// One motor pulls the wide chain to extend/contract the Arm
 	private final Motor extendMotor;
 
-	private Arm2d arm2d = new Arm2d("arm", new Color8Bit(0, 0, 255));
+	private Arm2d arm2d = new Arm2d("Arm", new Color8Bit(0, 0, 255));
 
 	private double targetLength_m;
 	private double targetAngle_deg;
@@ -79,11 +75,11 @@ public class Arm extends SubsystemBase<Arm.Command> {
 		MotorConfig extendConfig = new MotorConfig(EXTEND_MOTOR_ID)
 			.withCanbus(CANBUS)
 			.withBrake(BRAKE)
-			.withSensorToMechanismRatio(EXTEND_GEAR_RATIO)
+			.withSensorToMechanismRatio(EXTEND_METERS_TO_ROTATIONS)
 			.withFFGains(kExtendS, kExtendV, kExtendA, kExtendG)
 			.withPIDGains(kExtendP, kExtendI, kExtendD, EXTEND_GRAVITY_TYPE)
 			.withMotionMagic(EXTEND_CRUISE_VELOCITY_mps, EXTEND_ACCELERATION_mps2, EXTEND_JERK_mps3)
-			.withSim(EXTEND_SIM_MOTOR, EXTEND_GEAR_RATIO, SIM_MOI_kgm2);
+			.withSim(EXTEND_SIM_MOTOR, EXTEND_METERS_TO_ROTATIONS, SIM_MOI_kgm2);
 
 		this.extendMotor = new Motor("Arm/ExtendMotor", extendConfig);
 

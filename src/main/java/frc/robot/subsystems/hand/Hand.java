@@ -27,7 +27,7 @@ public class Hand extends SubsystemBase<Hand.Command> {
 
 	private Motor motor;
 
-	private Hand2d hand2d = new Hand2d("Hand2d", new Color8Bit(255, 0, 0));
+	private Hand2d hand2d = new Hand2d("Hand", new Color8Bit(255, 0, 0));
 
 	private double targetAngle_deg;
 	private double targetVolts_v;

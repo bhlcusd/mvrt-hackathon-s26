@@ -12,6 +12,7 @@ import java.util.EnumSet;
 
 import org.littletonrobotics.junction.Logger;
 
+// TODO: Implement intake for intaking items
 public class SS extends SubsystemBase<SS.Command> {
 
     public enum Flag {
@@ -30,15 +31,22 @@ public class SS extends SubsystemBase<SS.Command> {
         IDLE,
         MANUAL,
         INTAKE,
-        SCORING,
-        STOWING,
+        SCORE,
+        STOW,
     }
 
-    private enum Manual {
+    public enum Manual {
         ARM_ROTATE,
         ARM_EXTEND,
         HAND_INTAKE,
         HAND_EXPEL
+    }
+
+    private enum Intake {
+        LOWERING,
+        INTAKE,
+        SETTLING,
+        READY
     }
 
     private enum Scoring {
@@ -106,12 +114,15 @@ public class SS extends SubsystemBase<SS.Command> {
             case MANUAL:
                 handleManual();
                 break;
-            case SCORING:
+            case INTAKE:
+                handleIntake();
+                break;
+            case SCORE:
                 handleScoring();
                 break;
-            case STOWING:
+            case STOW:
                 arm.moveTo(ArmConstants.MIN_LENGTH_m, ArmConstants.STOW_ANGLE_deg);
-                hand.idle();
+                hand.zero();
                 break;
             default:
                 break;
@@ -125,8 +136,10 @@ public class SS extends SubsystemBase<SS.Command> {
             setCommand(Command.IDLE);
         } else if (has(Flag.MANUAL)) {
             setCommand(Command.MANUAL);
+        } else if (has(Flag.INTAKE)) {
+            setCommand(Command.INTAKE);
         } else if (has(Flag.SCORE_LOW) || has(Flag.SCORE_MED) || has(Flag.SCORE_HIGH)) {
-            setCommand(Command.SCORING);
+            setCommand(Command.SCORE);
         }
     }
 
@@ -153,13 +166,32 @@ public class SS extends SubsystemBase<SS.Command> {
                 hand.manual(manualDirection * HandConstants.MANUAL_VOLTS_v);
                 break;
             default:
-                // A ClassCastException would be thrown if the substate was not Manual, so no need to intervene here
+                // A ClassCastException would be thrown if the substate was not Manual or null, so no need to intervene here
                 break;
         }
     }
 
     private void toggleDirection() {
         this.manualDirection = -this.manualDirection;
+    }
+
+    private void handleIntake() {
+        if (firstLoop()) {
+            setSubstate(Intake.LOWERING);
+        }
+
+        switch ((Intake) getSubstate()) {
+            case LOWERING:
+                break;
+            case INTAKE:
+                break;
+            case SETTLING:
+                break;
+            case READY:
+                break;
+            default:
+                break;
+        }
     }
 
     private void handleScoring() {
@@ -197,6 +229,11 @@ public class SS extends SubsystemBase<SS.Command> {
             default:
                 break;
         }
+    }
+
+    public void setManual(Manual manual, boolean active) {
+        setSubstate(manual);
+        set(Flag.MANUAL, active);
     }
 
     /**
