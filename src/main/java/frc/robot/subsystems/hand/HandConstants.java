@@ -46,7 +46,4 @@ public class HandConstants {
 
 	// Manual
 	public static final double MANUAL_VOLTS_v = 2;
-
-	// Scoring
-	public static final double[] SCORING_ANGLES = {};
 }

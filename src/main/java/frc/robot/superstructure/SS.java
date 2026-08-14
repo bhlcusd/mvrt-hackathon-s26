@@ -3,7 +3,6 @@ package frc.robot.superstructure;
 import frc.robot.subsystems.SubsystemBase;
 import frc.robot.subsystems.arm.Arm;
 import frc.robot.subsystems.arm.ArmConstants;
-import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.hand.Hand;
 import frc.robot.subsystems.hand.HandConstants;
 import frc.robot.subsystems.tracking.Tracking;
@@ -56,7 +55,6 @@ public class SS extends SubsystemBase<SS.Command> {
     
     private final Arm arm;
     private final Hand hand;
-    private final Drive drive;
     private final Vision vision;
     private final Tracking tracking;
 
@@ -78,7 +76,6 @@ public class SS extends SubsystemBase<SS.Command> {
 
         arm = Arm.getInstance();
         hand = Hand.getInstance();
-        drive = Drive.getInstance();
         vision = Vision.getInstance();
         tracking = Tracking.getInstance();
 
@@ -205,9 +202,9 @@ public class SS extends SubsystemBase<SS.Command> {
     /**
      * Updates the current targets based on the current flag, accessing values from subsystem constant class's arrays.
      * 
-     * Dev note: This isn't the best system, but without modifying how flags work, it's the best for what the current
-     * handle() system needs. Besides, this project is pretty minor in scope, with only the Arm and Hand subsystems
-     * needing their own custom implementations.
+     * Dev note: This isn't the best system, but without modifying how flags work (no support for mutually exclusive flags), 
+     * it's the best for what the current handle() system needs. Besides, this project is pretty minor in scope, with only 
+     * the Arm and Hand subsystems needing their own custom implementations.
      */
     private void handleTargets() {
         int index = -1;
@@ -222,7 +219,7 @@ public class SS extends SubsystemBase<SS.Command> {
 
         this.armAngleTarget_deg = ArmConstants.SCORING_ANGLES[index];
         this.armLengthTarget_m = ArmConstants.SCORING_LENGTHS[index];
-        this.handAngle_deg = HandConstants.SCORING_ANGLES[index];
+        this.handAngle_deg = HandConstants.EXPEL_deg;
     }
 
     @Override

@@ -80,7 +80,6 @@ public class ArmConstants {
 	public static final double MANUAL_EXTEND_VOLTS_v = 2;
 
 	// Scoring
-	public static final double[] SCORING_LENGTHS = {};
-	public static final double[] SCORING_ANGLES = {};
-
+	public static final double[] SCORING_LENGTHS = {0.2, 0.7, 1.2};
+	public static final double[] SCORING_ANGLES = {30, 45, 60};
 }
