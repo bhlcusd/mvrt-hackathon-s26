@@ -4,10 +4,12 @@ import static frc.robot.subsystems.arm.ArmConstants.*;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.devices.motor.Motor;
 import frc.robot.devices.motor.MotorConfig;
 import frc.robot.subsystems.SubsystemBase;
+import frc.robot.util.Util;
 
 public class Arm extends SubsystemBase<Arm.Command> {
 	
@@ -21,7 +23,7 @@ public class Arm extends SubsystemBase<Arm.Command> {
 	// One motor pulls the wide chain to extend/contract the Arm
 	private final Motor extendMotor;
 
-	private Arm2d arm2d = new Arm2d("Arm", new Color8Bit(0, 0, 255));
+	private final Arm2d arm2d = new Arm2d("Arm", new Color8Bit(0, 0, 255));
 
 	private double targetLength_m;
 	private double targetAngle_deg;
@@ -122,8 +124,7 @@ public class Arm extends SubsystemBase<Arm.Command> {
 				//	2. Add a ROTATE and EXTEND substates (but that would make it rotate or extend, not both)
 				rotateLeftMotor.setMotionMagic(targetAngle_deg);
 				rotateRightMotor.setMotionMagic(targetAngle_deg);
-				// extendMotor.setMotionMagic(targetLength_m);
-				extendMotor.setMotionMagic(1);
+				extendMotor.setMotionMagic(targetLength_m);
 
 				switch ((Travel) getSubstate()) {
 					case MOVING:
@@ -178,8 +179,8 @@ public class Arm extends SubsystemBase<Arm.Command> {
 	}
 
 	public void moveTo(double length, double angle) {
-		this.targetLength_m = length;
-		this.targetAngle_deg = angle;
+		this.targetLength_m = MathUtil.clamp(length, ArmConstants.MIN_LENGTH_m, ArmConstants.MAX_LENGTH_m);
+		this.targetAngle_deg = MathUtil.clamp(angle, ArmConstants.MIN_ANGLE_deg, ArmConstants.MAX_ANGLE_deg);
 		setCommand(Command.TRAVEL);
 	}
 
@@ -192,8 +193,8 @@ public class Arm extends SubsystemBase<Arm.Command> {
 	}
 
 	public void manual(double extendVolts, double rotateVolts) {
-		this.targetExtendVolts_v = extendVolts;
-		this.targetRotateVolts_v = rotateVolts;
+		this.targetExtendVolts_v = MathUtil.clamp(extendVolts, -12, 12);
+		this.targetRotateVolts_v = MathUtil.clamp(rotateVolts, -12, 12);
 		setCommand(Command.MANUAL);
 	}
 
@@ -226,11 +227,11 @@ public class Arm extends SubsystemBase<Arm.Command> {
 	}
 
 	public boolean atRotationTarget() {
-		return Math.abs(targetAngle_deg - getAngle()) < ANGLE_TOLERANCE_deg;
+		return Util.inRange(targetAngle_deg - getAngle(), ANGLE_TOLERANCE_deg);
 	}
 
 	public boolean atExtendTarget() {
-		return Math.abs(targetLength_m - getLength()) < LENGTH_TOLERANCE_m;
+		return Util.inRange(targetLength_m - getLength(), LENGTH_TOLERANCE_m);
 	}
 
 	public boolean atTarget() {

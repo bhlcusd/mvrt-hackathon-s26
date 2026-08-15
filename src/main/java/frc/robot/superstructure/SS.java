@@ -145,6 +145,10 @@ public class SS extends SubsystemBase<SS.Command> {
     }
 
     private void handleManual() {
+        while (!substateInit()) {
+            System.out.println("Waiting for substate to change...");
+        }
+
         switch ((Manual) getSubstate()) {
             case ARM_EXTEND:
                 arm.manualExtend(manualDirection * ArmConstants.MANUAL_EXTEND_VOLTS_v);

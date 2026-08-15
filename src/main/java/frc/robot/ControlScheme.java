@@ -23,7 +23,9 @@ public class ControlScheme {
     public ControlScheme(SS ss, Drive drive) {
         this.ss = ss;
         this.drive = drive;
+        
         this.scoring = 0;
+        this.manual = 0;
     }
 
     public void init() {

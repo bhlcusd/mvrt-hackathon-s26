@@ -4,10 +4,12 @@ import static frc.robot.subsystems.hand.HandConstants.*;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.devices.motor.Motor;
 import frc.robot.devices.motor.MotorConfig;
 import frc.robot.subsystems.SubsystemBase;
+import frc.robot.util.Util;
 
 public class Hand extends SubsystemBase<Hand.Command> {
 	public enum Command {
@@ -27,7 +29,7 @@ public class Hand extends SubsystemBase<Hand.Command> {
 
 	private Motor motor;
 
-	private Hand2d hand2d = new Hand2d("Hand", new Color8Bit(255, 0, 0));
+	private final Hand2d hand2d = new Hand2d("Hand", new Color8Bit(255, 0, 0));
 
 	private double targetAngle_deg;
 	private double targetVolts_v;
@@ -123,7 +125,7 @@ public class Hand extends SubsystemBase<Hand.Command> {
 	}
 
 	public void manual(double volts) {
-		this.targetVolts_v = volts;
+		this.targetVolts_v = MathUtil.clamp(volts, -12, 12);
 		setCommand(Command.MANUAL);
 	}
 
@@ -152,6 +154,6 @@ public class Hand extends SubsystemBase<Hand.Command> {
 	}
 
 	public boolean atAngleTarget() {
-		return Math.abs(targetAngle_deg - getAngle()) < TOLERANCE_deg;
+		return Util.inRange(targetAngle_deg - getAngle(), TOLERANCE_deg);
 	}
 }
