@@ -12,7 +12,6 @@ import java.util.EnumSet;
 
 import org.littletonrobotics.junction.Logger;
 
-// TODO: Implement intake for intaking items
 public class SS extends SubsystemBase<SS.Command> {
 
     public enum Flag {
@@ -45,7 +44,6 @@ public class SS extends SubsystemBase<SS.Command> {
     private enum Intake {
         LOWERING,
         INTAKE,
-        SETTLING,
         READY
     }
 
@@ -121,10 +119,11 @@ public class SS extends SubsystemBase<SS.Command> {
                 handleScoring();
                 break;
             case STOW:
-                arm.moveTo(ArmConstants.MIN_LENGTH_m, ArmConstants.STOW_ANGLE_deg);
+                arm.stow();
                 hand.zero();
                 break;
             default:
+                System.out.println("Unimplemented command: " + getCommand().name());
                 break;
         }
     }
@@ -136,6 +135,8 @@ public class SS extends SubsystemBase<SS.Command> {
             setCommand(Command.IDLE);
         } else if (has(Flag.MANUAL)) {
             setCommand(Command.MANUAL);
+        } else if (has(Flag.STOW)) {
+            setCommand(Command.STOW);
         } else if (has(Flag.INTAKE)) {
             setCommand(Command.INTAKE);
         } else if (has(Flag.SCORE_LOW) || has(Flag.SCORE_MED) || has(Flag.SCORE_HIGH)) {
@@ -182,12 +183,23 @@ public class SS extends SubsystemBase<SS.Command> {
 
         switch ((Intake) getSubstate()) {
             case LOWERING:
+                arm.moveTo(ArmConstants.INTAKE_LENGTH_m, ArmConstants.INTAKE_ANGLE_deg);
+
+                if (arm.atTarget()) {
+                    setSubstate(Intake.INTAKE);
+                }
                 break;
             case INTAKE:
-                break;
-            case SETTLING:
+                hand.intake(HandConstants.INTAKE_deg);
+
+                if (!arm.atTarget()) {
+                    setSubstate(Intake.LOWERING);
+                } else if (hand.atAngleTarget()) {
+                    setSubstate(Intake.READY);
+                }
                 break;
             case READY:
+                // Do nothing here, just a signal that intake is complete or "Ready" for teleoperation
                 break;
             default:
                 break;
@@ -231,11 +243,6 @@ public class SS extends SubsystemBase<SS.Command> {
         }
     }
 
-    public void setManual(Manual manual, boolean active) {
-        setSubstate(manual);
-        set(Flag.MANUAL, active);
-    }
-
     /**
      * Updates the current targets based on the current flag, accessing values from subsystem constant class's arrays.
      * 
@@ -252,6 +259,9 @@ public class SS extends SubsystemBase<SS.Command> {
             index = 1;
         } else if (has(Flag.SCORE_HIGH)) {
             index = 2;
+        } else {
+            System.out.println("No score flag set! Defaulting to 0...");
+            index = 0;
         }
 
         this.armAngleTarget_deg = ArmConstants.SCORING_ANGLES[index];
@@ -263,6 +273,18 @@ public class SS extends SubsystemBase<SS.Command> {
     protected void outputPeriodic() {
         String[] active = flags.stream().map(Enum::name).toArray(String[]::new);
         Logger.recordOutput("Superstructure/Flags", active);
+        Logger.recordOutput("Superstructure/ArmAngleTarget_deg", armAngleTarget_deg);
+        Logger.recordOutput("Superstructure/ArmLengthTarget_m", armLengthTarget_m);
+        Logger.recordOutput("Superstructure/HandAngle_deg", handAngle_deg);
+    }
+
+    public void setManual(Manual manual, boolean active) {
+        if (active) {
+            setSubstate(manual);
+            enable(Flag.MANUAL);
+        } else if (has(Flag.MANUAL)) {
+            disable(Flag.MANUAL);
+        }
     }
 
     // INFO: The following are methods to handle flags. Do not modify!

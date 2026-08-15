@@ -20,7 +20,7 @@ public class Arm2d {
 
 		this.mech = new LoggedMechanism2d(2, 2);
 		this.root = mech.getRoot("root", 0.5, 1);
-		this.arm = root.append(new LoggedMechanismLigament2d("armSeg1", 0.62, 90, 5, color));
+		this.arm = root.append(new LoggedMechanismLigament2d("armSeg1", ArmConstants.MIN_LENGTH_m, ArmConstants.STOW_ANGLE_deg, 5, color));
 	}
 
 	public void setLength(double length) {

@@ -51,6 +51,11 @@ public class Arm extends SubsystemBase<Arm.Command> {
 	private Arm() {
 		super("Arm");
 
+		this.targetAngle_deg = ArmConstants.STOW_ANGLE_deg;
+		this.targetLength_m = ArmConstants.MIN_LENGTH_m;
+		this.targetRotateVolts_v = 0;
+		this.targetExtendVolts_v = 0;
+
 		MotorConfig leftConfig = new MotorConfig(LEFT_MOTOR_ID)
 			.withCanbus(CANBUS)
 			.withBrake(BRAKE)
@@ -99,10 +104,12 @@ public class Arm extends SubsystemBase<Arm.Command> {
 			case DISABLED:
 				rotateLeftMotor.stop();
 				rotateRightMotor.stop();
+				extendMotor.stop();
 				break;
 			case IDLE:
 				rotateLeftMotor.setVoltage(0);
 				rotateRightMotor.setVoltage(0);
+				extendMotor.setVoltage(0);
 				break;
 			case TRAVEL:
 				if (firstLoop()) {
@@ -115,7 +122,8 @@ public class Arm extends SubsystemBase<Arm.Command> {
 				//	2. Add a ROTATE and EXTEND substates (but that would make it rotate or extend, not both)
 				rotateLeftMotor.setMotionMagic(targetAngle_deg);
 				rotateRightMotor.setMotionMagic(targetAngle_deg);
-				extendMotor.setMotionMagic(targetLength_m);
+				// extendMotor.setMotionMagic(targetLength_m);
+				extendMotor.setMotionMagic(1);
 
 				switch ((Travel) getSubstate()) {
 					case MOVING:
@@ -163,6 +171,10 @@ public class Arm extends SubsystemBase<Arm.Command> {
 
 	public void idle() {
 		setCommand(Command.IDLE);
+	}
+
+	public void stow() {
+		moveTo(ArmConstants.MIN_LENGTH_m, ArmConstants.STOW_ANGLE_deg);
 	}
 
 	public void moveTo(double length, double angle) {

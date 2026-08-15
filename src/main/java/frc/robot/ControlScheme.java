@@ -15,11 +15,9 @@ public class ControlScheme {
     private final Drive drive;
 
     private int scoring;
-    private static final int SCORING_MAX = 3;
     private static final Flag[] SCORING_FLAGS = {Flag.SCORE_LOW, Flag.SCORE_MED, Flag.SCORE_HIGH};
 
     private int manual;
-    private static final int MANUAL_MAX = 4;
     private static final Manual[] MANUAL_MODES = {Manual.ARM_ROTATE, Manual.ARM_EXTEND, Manual.HAND_INTAKE, Manual.HAND_EXPEL};
 
     public ControlScheme(SS ss, Drive drive) {
@@ -53,31 +51,54 @@ public class ControlScheme {
         }
 
         // Input mapping (for my broken controller)
-        // Left bumper - 7
-        // Right bumper - 8
+        // Left bumper - 5
+        // Right bumper - 6
         // A - 1
         // B - 2
-        // X - 4
-        // Y - 5
-        // Hamburger Menu - 12
+        // X - 3
+        // Y - 4
+        // Hamburger Menu - 8
         // Mirror - 7
-        // Right joystick button - 9
+        // Right joystick button - 10
 
+        /*
         // Check left bumper to increase Manual value
-        if (OI.DR.getRawButtonPressed(7)) {
-
+        if (OI.DR.getRawButtonPressed(5)) {
+            manual = Math.abs(manual + 1) % MANUAL_MODES.length;
+            System.out.println("Manual is now: " + manual);
         }
 
         // Check right bumper to increase the scoring value
-        if (OI.DR.getRawButtonPressed(8)) {
-            scoring = Math.abs(scoring + 1) % SCORING_MAX;
+        if (OI.DR.getRawButtonPressed(6)) {
+            scoring = Math.abs(scoring + 1) % SCORING_FLAGS.length;
+            System.out.println("Scoring is now: " + scoring);
         }
 
         ss.set(Flag.DISABLE, OI.DR.getRawButton(7));
         ss.set(Flag.IDLE, OI.DR.getRawButton(1));
         ss.setManual(Manual.ARM_EXTEND, OI.DR.getRawButton(2));
-        ss.set(Flag.INTAKE, OI.DR.getRawButton(4));
-        ss.set(SCORING_FLAGS[scoring], OI.DR.getRawButton(5));
-        ss.set(Flag.STOW, OI.DR.getRawButton(9));
+        ss.set(Flag.INTAKE, OI.DR.getRawButton(3));
+        ss.set(SCORING_FLAGS[scoring], OI.DR.getRawButton(4));
+        ss.set(Flag.STOW, OI.DR.getRawButton(10));
+        */
+
+        // Check left bumper to increase Manual value
+        if (OI.DR.getLeftBumperButtonPressed()) {
+            manual = Math.abs(manual + 1) % MANUAL_MODES.length;
+            System.out.println("Manual is now: " + manual);
+        }
+
+        // Check right bumper to increase the scoring value
+        if (OI.DR.getRightBumperButtonPressed()) {
+            scoring = Math.abs(scoring + 1) % SCORING_FLAGS.length;
+            System.out.println("Scoring is now: " + scoring);
+        }
+
+        ss.set(Flag.DISABLE, OI.DR.getRawButton(7)); // Mirror button
+        ss.set(Flag.IDLE, OI.DR.getAButton());
+        ss.setManual(Manual.ARM_EXTEND, OI.DR.getBButton());
+        ss.set(Flag.INTAKE, OI.DR.getXButton());
+        ss.set(SCORING_FLAGS[scoring], OI.DR.getYButton());
+        ss.set(Flag.STOW, OI.DR.getRawButton(10)); // Right joystick button
     }
 }
