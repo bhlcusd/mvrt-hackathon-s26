@@ -64,6 +64,7 @@ public class SS extends SubsystemBase<SS.Command> {
     private final Vision vision;
     private final Tracking tracking;
 
+    private Manual manualMode;
     private int manualDirection;
 
     private double armAngleTarget_deg;
@@ -103,11 +104,10 @@ public class SS extends SubsystemBase<SS.Command> {
                 hand.disable();
                 vision.disable();
                 tracking.disable();
+                break;
             case IDLE:
                 arm.idle();
                 hand.idle();
-                vision.enable();
-                tracking.enable();
                 break;
             case MANUAL:
                 handleManual();
@@ -141,12 +141,23 @@ public class SS extends SubsystemBase<SS.Command> {
             setCommand(Command.INTAKE);
         } else if (has(Flag.SCORE_LOW) || has(Flag.SCORE_MED) || has(Flag.SCORE_HIGH)) {
             setCommand(Command.SCORE);
+        } else {
+            setCommand(Command.IDLE);
         }
     }
 
     private void handleManual() {
-        while (!substateInit()) {
-            System.out.println("Waiting for substate to change...");
+        if (!(getSubstate() instanceof Manual)) {
+            if (manualMode != null) {
+                setSubstate(manualMode);
+            } else {
+                System.out.println("Command.Manual does not have corresponing Manual substate!");
+                
+                arm.idle();
+                hand.idle();
+
+                return;
+            }
         }
 
         switch ((Manual) getSubstate()) {
@@ -282,13 +293,26 @@ public class SS extends SubsystemBase<SS.Command> {
         Logger.recordOutput("Superstructure/HandAngle_deg", handAngle_deg);
     }
 
+    /**
+     * Sets the mode to manual using the Manual substate. Setting substate the normal way won't work since
+     * the Superstructure changes the command, wiping the substate. This keeps the substate in a dedicated
+     * field variable and gets reassigned to the substate when needed in handleManual()
+     * 
+     * @param manual            the manual mode
+     * @param active            true if active, false otherwise
+     */
     public void setManual(Manual manual, boolean active) {
         if (active) {
-            setSubstate(manual);
-            enable(Flag.MANUAL);
-        } else if (has(Flag.MANUAL)) {
-            disable(Flag.MANUAL);
+            if (getCommand() == Command.MANUAL) {
+                setSubstate(manual);
+            }
+
+            this.manualMode = manual;
+        } else {
+            this.manualMode = null;
         }
+
+        set(Flag.MANUAL, active);
     }
 
     // INFO: The following are methods to handle flags. Do not modify!

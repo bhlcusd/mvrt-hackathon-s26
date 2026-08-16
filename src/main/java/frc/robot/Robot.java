@@ -142,6 +142,8 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void autonomousInit() {
+        vision.enable();
+        tracking.enable();
     }
 
     @Override

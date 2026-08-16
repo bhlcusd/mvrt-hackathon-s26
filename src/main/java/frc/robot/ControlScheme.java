@@ -98,7 +98,7 @@ public class ControlScheme {
 
         ss.set(Flag.DISABLE, OI.DR.getRawButton(7)); // Mirror button
         ss.set(Flag.IDLE, OI.DR.getAButton());
-        ss.setManual(Manual.ARM_EXTEND, OI.DR.getBButton());
+        ss.setManual(MANUAL_MODES[manual], OI.DR.getBButton());
         ss.set(Flag.INTAKE, OI.DR.getXButton());
         ss.set(SCORING_FLAGS[scoring], OI.DR.getYButton());
         ss.set(Flag.STOW, OI.DR.getRawButton(10)); // Right joystick button

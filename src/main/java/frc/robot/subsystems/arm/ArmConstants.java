@@ -17,24 +17,25 @@ public class ArmConstants {
 	public static final String CANBUS = TunerConstants.kCANBus.getName();
 	public static final boolean BRAKE = true;
 	public static final double[] SEGMENT_MOI_kgm2 = {0.146, 0.47, 1.373};
+	public static final double EXTEND_ROLLER_DIAMETER_m = 0.0381;
 	// We could change this to instead return a predicted MOI value at a given length instead of pre-calculated MOI
 	// MOI should be similar to a rod (ie. equation should be quadratic - rod: 1/12 * m * l^2), but IDK about the SIM MOI provided since that must be a constant
 
 	// PID
-	public static final double kRotateP = 2.0;
+	public static final double kRotateP = 10.0;
 	public static final double kRotateI = 0.5;
-	public static final double kRotateD = 0.25;
+	public static final double kRotateD = 10.0;
 	public static final double kRotateA = 0.75;
-	public static final double kRotateG = 4.5;
+	public static final double kRotateG = 0.5;
 	public static final double kRotateV = 0.85;
-	public static final double kRotateS = 0.25;
+	public static final double kRotateS = 0.1;
 
-	public static final double kExtendP = 0;
-	public static final double kExtendI = 0;
-	public static final double kExtendD = 0;
+	public static final double kExtendP = 5.0;
+	public static final double kExtendI = 0.5;
+	public static final double kExtendD = 1.0;
 	public static final double kExtendA = 0.1;
 	public static final double kExtendG = 0.5;
-	public static final double kExtendV = 0.01;
+	public static final double kExtendV = 1.2;
 	public static final double kExtendS = 0.1;
 
 	public static final GravityType ROTATE_GRAVITY_TYPE = GravityType.ARM;
@@ -43,12 +44,13 @@ public class ArmConstants {
 	// Gear ratios
 	public static final double ROTATE_GEAR_RATIO = 7.5;
 	public static final double EXTEND_GEAR_RATIO = 2.4;
-	public static final double EXTEND_METERS_TO_ROTATIONS = Math.PI * 0.0381 * EXTEND_GEAR_RATIO;
+	public static final double ROTATE_SENSOR_TO_MECHANISM_RATIO = 1 / ROTATE_GEAR_RATIO;
+	public static final double EXTEND_SENSOR_TO_MECHANISM_RATIO = Math.PI * EXTEND_ROLLER_DIAMETER_m / EXTEND_GEAR_RATIO;
 
 	// Motion magic
-	public static final double ROTATE_CRUISE_VELOCITY_rps = 15.0;
-	public static final double ROTATE_ACCELERATION_rps2 = 20.0;
-	public static final double ROTATE_JERK_rps3 = 50.0;
+	public static final double ROTATE_CRUISE_VELOCITY_rps = 2.0;
+	public static final double ROTATE_ACCELERATION_rps2 = 5.0;
+	public static final double ROTATE_JERK_rps3 = 25.0;
 
 	public static final double EXTEND_CRUISE_VELOCITY_mps = 0.5;
 	public static final double EXTEND_ACCELERATION_mps2 = 2.0;

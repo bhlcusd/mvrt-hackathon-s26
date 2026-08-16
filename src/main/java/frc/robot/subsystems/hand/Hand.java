@@ -5,6 +5,7 @@ import static frc.robot.subsystems.hand.HandConstants.*;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.devices.motor.Motor;
 import frc.robot.devices.motor.MotorConfig;
@@ -16,8 +17,7 @@ public class Hand extends SubsystemBase<Hand.Command> {
 		DISABLE,
 		IDLE,
 		MANUAL,
-		TRAVEL,
-		ZERO
+		TRAVEL
 	}
 
 	private enum Travel {
@@ -48,11 +48,11 @@ public class Hand extends SubsystemBase<Hand.Command> {
 		MotorConfig config = new MotorConfig(MOTOR_ID)
 			.withCanbus(CANBUS)
 			.withBrake(BRAKE)
-			.withSensorToMechanismRatio(GEAR_RATIO)
+			.withSensorToMechanismRatio(SENSOR_TO_MECHANISM_RATIO)
 			.withFFGains(kS, kV, kA, kG)
 			.withPIDGains(kP, kI, kD, GRAVITY_TYPE)
 			.withMotionMagic(CRUISE_VELOCITY_rps, ACCELERATION_rps2, JERK_rps3)
-			.withSim(MOTOR, GEAR_RATIO, SIM_MOI_kgm2);
+			.withSim(MOTOR, SENSOR_TO_MECHANISM_RATIO, SIM_MOI_kgm2);
 
 		this.motor = new Motor("Hand/Motor", config);
 
@@ -77,7 +77,11 @@ public class Hand extends SubsystemBase<Hand.Command> {
 				motor.setVoltage(targetVolts_v);
 				break;
 			case TRAVEL:
-				motor.setMotionMagic(targetAngle_deg);
+				if (firstLoop()) {
+					setSubstate(Travel.MOVING);
+				}
+
+				motor.setMotionMagic(Units.degreesToRotations(targetAngle_deg));
 
 				switch ((Travel) getSubstate()) {
 					case MOVING:
@@ -94,13 +98,6 @@ public class Hand extends SubsystemBase<Hand.Command> {
 						break;
 				}
 				break;
-			case ZERO:
-				motor.setMotionMagic(ZERO_deg);
-
-				if (Math.abs(ZERO_deg - getAngle()) < TOLERANCE_deg) {
-					setCommand(Command.IDLE);
-				}
-				break;
 			default:
 				break;
 		}
@@ -111,9 +108,9 @@ public class Hand extends SubsystemBase<Hand.Command> {
 		hand2d.update(getAngle());
 		hand2d.periodic();
 
-		Logger.recordOutput("Arm/Angle_deg", getAngle());
-		Logger.recordOutput("Arm/Velocity_dps", getVelocity());
-		Logger.recordOutput("Arm/TargetAngle_deg", targetAngle_deg); 
+		Logger.recordOutput("Hand/Angle_deg", getAngle());
+		Logger.recordOutput("Hand/Velocity_dps", getVelocity());
+		Logger.recordOutput("Hand/TargetAngle_deg", targetAngle_deg); 
 	}
 
 	public void disable() {
@@ -142,15 +139,16 @@ public class Hand extends SubsystemBase<Hand.Command> {
 	}
 
 	public void zero() {
-		setCommand(Command.ZERO);
+		this.targetAngle_deg = ZERO_deg;
+		setCommand(Command.TRAVEL);
 	}
 
 	public double getAngle() {
-		return motor.getPosition();
+		return Units.rotationsToDegrees(motor.getPosition());
 	}
 
 	public double getVelocity() {
-		return motor.getVelocity();
+		return Units.rotationsToDegrees(motor.getVelocity());
 	}
 
 	public boolean atAngleTarget() {

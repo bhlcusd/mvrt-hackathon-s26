@@ -5,6 +5,7 @@ import static frc.robot.subsystems.arm.ArmConstants.*;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.devices.motor.Motor;
 import frc.robot.devices.motor.MotorConfig;
@@ -61,20 +62,20 @@ public class Arm extends SubsystemBase<Arm.Command> {
 		MotorConfig leftConfig = new MotorConfig(LEFT_MOTOR_ID)
 			.withCanbus(CANBUS)
 			.withBrake(BRAKE)
-			.withSensorToMechanismRatio(ROTATE_GEAR_RATIO)
+			.withSensorToMechanismRatio(ROTATE_SENSOR_TO_MECHANISM_RATIO)
 			.withFFGains(kRotateS, kRotateV, kRotateA, kRotateG)
 			.withPIDGains(kRotateP, kRotateI, kRotateD, ROTATE_GRAVITY_TYPE)
 			.withMotionMagic(ROTATE_CRUISE_VELOCITY_rps, ROTATE_ACCELERATION_rps2, ROTATE_JERK_rps3)
-			.withSim(ROTATE_SIM_MOTORS, ROTATE_GEAR_RATIO, SIM_MOI_kgm2);
+			.withSim(ROTATE_SIM_MOTORS, ROTATE_SENSOR_TO_MECHANISM_RATIO, SIM_MOI_kgm2);
 		
 		MotorConfig rightConfig = new MotorConfig(RIGHT_MOTOR_ID)
 			.withCanbus(CANBUS)
 			.withBrake(BRAKE)
-			.withSensorToMechanismRatio(ROTATE_GEAR_RATIO)
+			.withSensorToMechanismRatio(ROTATE_SENSOR_TO_MECHANISM_RATIO)
 			.withFFGains(kRotateS, kRotateV, kRotateA, kRotateG)
 			.withPIDGains(kRotateP, kRotateI, kRotateD, ROTATE_GRAVITY_TYPE)
 			.withMotionMagic(ROTATE_CRUISE_VELOCITY_rps, ROTATE_ACCELERATION_rps2, ROTATE_JERK_rps3)
-			.withSim(ROTATE_SIM_MOTORS, ROTATE_GEAR_RATIO, SIM_MOI_kgm2);
+			.withSim(ROTATE_SIM_MOTORS, ROTATE_SENSOR_TO_MECHANISM_RATIO, SIM_MOI_kgm2);
 
 		this.rotateLeftMotor = new Motor("Arm/rotateLeftMotor", leftConfig);
 		this.rotateRightMotor = new Motor("Arm/rotateRightMotor", rightConfig);
@@ -82,11 +83,11 @@ public class Arm extends SubsystemBase<Arm.Command> {
 		MotorConfig extendConfig = new MotorConfig(EXTEND_MOTOR_ID)
 			.withCanbus(CANBUS)
 			.withBrake(BRAKE)
-			.withSensorToMechanismRatio(EXTEND_METERS_TO_ROTATIONS)
+			.withSensorToMechanismRatio(EXTEND_SENSOR_TO_MECHANISM_RATIO)
 			.withFFGains(kExtendS, kExtendV, kExtendA, kExtendG)
 			.withPIDGains(kExtendP, kExtendI, kExtendD, EXTEND_GRAVITY_TYPE)
 			.withMotionMagic(EXTEND_CRUISE_VELOCITY_mps, EXTEND_ACCELERATION_mps2, EXTEND_JERK_mps3)
-			.withSim(EXTEND_SIM_MOTOR, EXTEND_METERS_TO_ROTATIONS, SIM_MOI_kgm2);
+			.withSim(EXTEND_SIM_MOTOR, EXTEND_SENSOR_TO_MECHANISM_RATIO, SIM_MOI_kgm2);
 
 		this.extendMotor = new Motor("Arm/ExtendMotor", extendConfig);
 
@@ -122,8 +123,8 @@ public class Arm extends SubsystemBase<Arm.Command> {
 				// but that would mean that we would:
 				//	1. Have multiple substate enums to make it rotate and extend simultaniously (but how would we know what substate it's in without logic in Arm?)
 				//	2. Add a ROTATE and EXTEND substates (but that would make it rotate or extend, not both)
-				rotateLeftMotor.setMotionMagic(targetAngle_deg);
-				rotateRightMotor.setMotionMagic(targetAngle_deg);
+				rotateLeftMotor.setMotionMagic(Units.degreesToRotations(targetAngle_deg));
+				rotateRightMotor.setMotionMagic(Units.degreesToRotations(targetAngle_deg));
 				extendMotor.setMotionMagic(targetLength_m);
 
 				switch ((Travel) getSubstate()) {
@@ -215,7 +216,7 @@ public class Arm extends SubsystemBase<Arm.Command> {
 	 * to average out errors between motors.
 	 */
 	public double getAngle() {
-		return (rotateLeftMotor.getPosition() + rotateRightMotor.getPosition()) / 2;
+		return Units.rotationsToDegrees((rotateLeftMotor.getPosition() + rotateRightMotor.getPosition()) / 2);
 	}
 
 	/*
@@ -223,7 +224,7 @@ public class Arm extends SubsystemBase<Arm.Command> {
 	 * to average out errors between motors.
 	 */
 	public double getAngleVelocity() {
-		return (rotateLeftMotor.getVelocity() + rotateRightMotor.getVelocity()) / 2;
+		return Units.rotationsToDegrees((rotateLeftMotor.getVelocity() + rotateRightMotor.getVelocity()) / 2);
 	}
 
 	public boolean atRotationTarget() {
