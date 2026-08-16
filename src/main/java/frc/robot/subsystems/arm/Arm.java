@@ -110,6 +110,11 @@ public class Arm extends SubsystemBase<Arm.Command> {
 				extendMotor.stop();
 				break;
 			case IDLE:
+				if (!atTarget()) {
+					// setCommand(Command.TRAVEL);
+					break;
+				}
+
 				rotateLeftMotor.setVoltage(0);
 				rotateRightMotor.setVoltage(0);
 				extendMotor.setVoltage(0);

@@ -20,9 +20,7 @@ public class SS extends SubsystemBase<SS.Command> {
         STOW,
         MANUAL,
         INTAKE,
-        SCORE_LOW,
-        SCORE_MED,
-        SCORE_HIGH,
+        SCORE
     }
 
     public enum Command {
@@ -34,6 +32,7 @@ public class SS extends SubsystemBase<SS.Command> {
         STOW,
     }
 
+    // Value Enums (could be used as substate or hold enumerated values)
     public enum Manual {
         ARM_ROTATE,
         ARM_EXTEND,
@@ -41,6 +40,23 @@ public class SS extends SubsystemBase<SS.Command> {
         HAND_EXPEL
     }
 
+    public enum Score {
+        LOW(0),
+        MED(1),
+        HIGH(2);
+
+        private final int index;
+
+        private Score(int index) {
+            this.index = index;
+        }
+
+        public int index() {
+            return index;
+        }
+    }
+
+    // Substate enums (only used to differentiate between phases for an action)
     private enum Intake {
         LOWERING,
         INTAKE,
@@ -65,6 +81,8 @@ public class SS extends SubsystemBase<SS.Command> {
     private final Tracking tracking;
 
     private Manual manualMode;
+    private Score scoreMode;
+
     private int manualDirection;
 
     private double armAngleTarget_deg;
@@ -139,10 +157,8 @@ public class SS extends SubsystemBase<SS.Command> {
             setCommand(Command.STOW);
         } else if (has(Flag.INTAKE)) {
             setCommand(Command.INTAKE);
-        } else if (has(Flag.SCORE_LOW) || has(Flag.SCORE_MED) || has(Flag.SCORE_HIGH)) {
+        } else if (has(Flag.SCORE)) {
             setCommand(Command.SCORE);
-        } else {
-            setCommand(Command.IDLE);
         }
     }
 
@@ -226,7 +242,9 @@ public class SS extends SubsystemBase<SS.Command> {
             setSubstate(Scoring.TRAVELING);
         }
 
-        handleTargets();
+        this.armAngleTarget_deg = ArmConstants.SCORING_ANGLES[scoreMode.index()];
+        this.armLengthTarget_m = ArmConstants.SCORING_LENGTHS[scoreMode.index()];
+        this.handAngle_deg = HandConstants.EXPEL_deg;
 
         switch ((Scoring) getSubstate()) {
             case TRAVELING:
@@ -258,32 +276,6 @@ public class SS extends SubsystemBase<SS.Command> {
         }
     }
 
-    /**
-     * Updates the current targets based on the current flag, accessing values from subsystem constant class's arrays.
-     * 
-     * Dev note: This isn't the best system, but without modifying how flags work (no support for mutually exclusive flags), 
-     * it's the best for what the current handle() system needs. Besides, this project is pretty minor in scope, with only 
-     * the Arm and Hand subsystems needing their own custom implementations.
-     */
-    private void handleTargets() {
-        int index = -1;
-
-        if (has(Flag.SCORE_LOW)) {
-            index = 0;
-        } else if (has(Flag.SCORE_MED)) {
-            index = 1;
-        } else if (has(Flag.SCORE_HIGH)) {
-            index = 2;
-        } else {
-            System.out.println("No score flag set! Defaulting to 0...");
-            index = 0;
-        }
-
-        this.armAngleTarget_deg = ArmConstants.SCORING_ANGLES[index];
-        this.armLengthTarget_m = ArmConstants.SCORING_LENGTHS[index];
-        this.handAngle_deg = HandConstants.EXPEL_deg;
-    }
-
     @Override
     protected void outputPeriodic() {
         String[] active = flags.stream().map(Enum::name).toArray(String[]::new);
@@ -313,6 +305,17 @@ public class SS extends SubsystemBase<SS.Command> {
         }
 
         set(Flag.MANUAL, active);
+    }
+
+    /**
+     * Assigns the current score to the provided one if active, null otherwise. Then flags to score.
+     * 
+     * @param score             the score mode
+     * @param active            true if active, false otherwise
+     */
+    public void setScore(Score score, boolean active) {
+        this.scoreMode = active ? score : null;
+        set(Flag.SCORE, active);
     }
 
     // INFO: The following are methods to handle flags. Do not modify!

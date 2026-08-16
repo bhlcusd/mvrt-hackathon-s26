@@ -71,6 +71,11 @@ public class Hand extends SubsystemBase<Hand.Command> {
 				motor.stop();
 				break;
 			case IDLE:
+				if (!atAngleTarget()) {
+					// setCommand(Command.TRAVEL);
+					break;
+				}
+
 				motor.setVoltage(0);
 				break;
 			case MANUAL:
@@ -126,16 +131,21 @@ public class Hand extends SubsystemBase<Hand.Command> {
 		setCommand(Command.MANUAL);
 	}
 
+	// TODO: Fix intake and expel being called so that it increasingly increases launch angle and doesn't complete motion
 	public void intake(double delta_deg) {
-		this.targetAngle_deg = getAngle() + delta_deg;
-		setCommand(Command.TRAVEL);
-		setSubstate(Travel.MOVING); 
+		if (getCommand() != Command.TRAVEL || (getSubstate() instanceof Travel && (Travel) getSubstate() == Travel.HOLDING)) {
+			this.targetAngle_deg = getAngle() + delta_deg;
+			setCommand(Command.TRAVEL);
+			setSubstate(Travel.MOVING); 
+		}
 	}
 
 	public void expel(double delta_deg) {
-		this.targetAngle_deg = getAngle() - delta_deg;
-		setCommand(Command.TRAVEL);
-		setSubstate(Travel.MOVING);
+		if (getCommand() != Command.TRAVEL || (getSubstate() instanceof Travel && (Travel) getSubstate() == Travel.HOLDING)) {
+			this.targetAngle_deg = getAngle() - delta_deg;
+			setCommand(Command.TRAVEL);
+			setSubstate(Travel.MOVING);
+		}
 	}
 
 	public void zero() {

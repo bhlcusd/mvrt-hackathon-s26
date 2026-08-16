@@ -14,9 +14,9 @@ public class HandConstants {
 	public static final boolean BRAKE = true;
 
 	// PID
-	public static final double kP = 30.0;
+	public static final double kP = 1.0;
 	public static final double kI = 0;
-	public static final double kD = 0.5;
+	public static final double kD = 0.2;
 	public static final double kA = 0;
 	public static final double kG = 0;
 	public static final double kV = 0.11;
@@ -26,19 +26,19 @@ public class HandConstants {
 
 	// Gear Ratio
 	public static final double GEAR_RATIO = 1;
-	public static final double SENSOR_TO_MECHANISM_RATIO = 1 / GEAR_RATIO;
+	public static final double SENSOR_TO_MECHANISM_RATIO = GEAR_RATIO;
 
 	// Motion Magic
-	public static final double CRUISE_VELOCITY_rps = 8.0;
-	public static final double ACCELERATION_rps2 = 25.0;
-	public static final double JERK_rps3 = 80.0;
+	public static final double CRUISE_VELOCITY_rps = 1.0;
+	public static final double ACCELERATION_rps2 = 4.0;
+	public static final double JERK_rps3 = 20.0;
 
 	// Tolerances
 	public static final double TOLERANCE_deg = 1.5;
 
 	// Physical values
-	public static final double INTAKE_deg = 720;
-	public static final double EXPEL_deg = 720;
+	public static final double INTAKE_deg = 1440;
+	public static final double EXPEL_deg = 1440;
 	public static final double ZERO_deg = 0;
 
 	// Sim
