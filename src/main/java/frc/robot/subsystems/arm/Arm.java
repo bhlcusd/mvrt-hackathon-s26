@@ -110,14 +110,10 @@ public class Arm extends SubsystemBase<Arm.Command> {
 				extendMotor.stop();
 				break;
 			case IDLE:
-				if (!atTarget()) {
-					// setCommand(Command.TRAVEL);
-					break;
-				}
-
-				rotateLeftMotor.setVoltage(0);
-				rotateRightMotor.setVoltage(0);
-				extendMotor.setVoltage(0);
+				// Still navigate to target, otherwise it will be at some random position
+				rotateLeftMotor.setMotionMagic(Units.degreesToRotations(targetAngle_deg));
+				rotateRightMotor.setMotionMagic(Units.degreesToRotations(targetAngle_deg));
+				extendMotor.setMotionMagic(targetLength_m);
 				break;
 			case TRAVEL:
 				if (firstLoop()) {
@@ -210,6 +206,10 @@ public class Arm extends SubsystemBase<Arm.Command> {
 
 	public void manualRotate(double rotateVolts) {
 		manual(this.targetExtendVolts_v, rotateVolts);
+	}
+
+	public void manualReset() {
+		manual(0, 0);
 	}
 
 	public double getLength() {

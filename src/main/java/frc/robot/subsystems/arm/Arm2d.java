@@ -18,7 +18,7 @@ public class Arm2d {
 	public Arm2d(String name, Color8Bit color) {
 		this.name = name;
 
-		this.mech = new LoggedMechanism2d(2, 2);
+		this.mech = new LoggedMechanism2d(3, 3);
 		this.root = mech.getRoot("root", 0.5, 1);
 		this.arm = root.append(new LoggedMechanismLigament2d("armSeg1", ArmConstants.MIN_LENGTH_m, ArmConstants.STOW_ANGLE_deg, 5, color));
 	}

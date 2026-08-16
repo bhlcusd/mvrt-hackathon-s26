@@ -53,7 +53,7 @@ public class ControlScheme {
             drive.setPathingOverride(PathingOverride.NONE);
         }
 
-        // Input mapping (for my broken controller)
+        // Input mapping (Xbox One controller)
         // Left bumper - 5
         // Right bumper - 6
         // A - 1
@@ -62,25 +62,27 @@ public class ControlScheme {
         // Y - 4
         // Hamburger Menu - 8
         // Mirror - 7
+        // Left joystick button -9
         // Right joystick button - 10
 
         // Check left bumper to increase Manual value
         if (OI.DR.getLeftBumperButtonPressed()) {
             manual = Math.abs(manual + 1) % MANUAL_MODES.length;
-            System.out.println("Manual is now: " + manual);
+            System.out.println("Manual is now: " + MANUAL_MODES[manual].name());
         }
 
         // Check right bumper to increase the scoring value
         if (OI.DR.getRightBumperButtonPressed()) {
             scoring = Math.abs(scoring + 1) % SCORE_MODES.length;
-            System.out.println("Score is now: " + scoring);
+            System.out.println("Score is now: " + SCORE_MODES[scoring].name());
         }
 
         ss.set(Flag.DISABLE, OI.DR.getRawButton(7)); // Mirror button
         ss.set(Flag.IDLE, OI.DR.getAButton());
+        ss.set(Flag.STOW, OI.DR.getRawButton(10)); // Right joystick button
         ss.setManual(MANUAL_MODES[manual], OI.DR.getBButton());
         ss.set(Flag.INTAKE, OI.DR.getXButton());
+        ss.set(Flag.RAISE, OI.DR.getRawButton(9));
         ss.setScore(SCORE_MODES[scoring], OI.DR.getYButton());
-        ss.set(Flag.STOW, OI.DR.getRawButton(10)); // Right joystick button
     }
 }

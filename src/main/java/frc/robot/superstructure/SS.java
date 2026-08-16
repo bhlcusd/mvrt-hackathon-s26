@@ -20,16 +20,18 @@ public class SS extends SubsystemBase<SS.Command> {
         STOW,
         MANUAL,
         INTAKE,
+        RAISE,
         SCORE
     }
 
     public enum Command {
         DISABLE,
         IDLE,
+        STOW,
         MANUAL,
         INTAKE,
-        SCORE,
-        STOW,
+        RAISE,
+        SCORE
     }
 
     // Value Enums (could be used as substate or hold enumerated values)
@@ -60,6 +62,11 @@ public class SS extends SubsystemBase<SS.Command> {
     private enum Intake {
         LOWERING,
         INTAKE,
+        READY
+    }
+
+    private enum Raise {
+        RAISING,
         READY
     }
 
@@ -127,18 +134,21 @@ public class SS extends SubsystemBase<SS.Command> {
                 arm.idle();
                 hand.idle();
                 break;
+            case STOW:
+                arm.stow();
+                hand.zero();
+                break;
             case MANUAL:
                 handleManual();
                 break;
             case INTAKE:
                 handleIntake();
                 break;
+            case RAISE:
+                handleRaise();
+                break;
             case SCORE:
                 handleScoring();
-                break;
-            case STOW:
-                arm.stow();
-                hand.zero();
                 break;
             default:
                 System.out.println("Unimplemented command: " + getCommand().name());
@@ -157,12 +167,18 @@ public class SS extends SubsystemBase<SS.Command> {
             setCommand(Command.STOW);
         } else if (has(Flag.INTAKE)) {
             setCommand(Command.INTAKE);
+        } else if (has(Flag.RAISE)) {
+            setCommand(Command.RAISE);
         } else if (has(Flag.SCORE)) {
             setCommand(Command.SCORE);
         }
     }
 
     private void handleManual() {
+        if (firstLoop()) {
+            resetManual();
+        }
+
         if (!(getSubstate() instanceof Manual)) {
             if (manualMode != null) {
                 setSubstate(manualMode);
@@ -198,9 +214,13 @@ public class SS extends SubsystemBase<SS.Command> {
                 hand.manual(manualDirection * HandConstants.MANUAL_VOLTS_v);
                 break;
             default:
-                // A ClassCastException would be thrown if the substate was not Manual or null, so no need to intervene here
                 break;
         }
+    }
+
+    public void resetManual() {
+        arm.manualReset();
+        hand.manualReset();
     }
 
     private void toggleDirection() {
@@ -231,6 +251,33 @@ public class SS extends SubsystemBase<SS.Command> {
                 break;
             case READY:
                 // Do nothing here, just a signal that intake is complete or "Ready" for teleoperation
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void handleRaise() {
+        if (firstLoop()) {
+            setSubstate(Raise.RAISING);
+        }
+
+        switch ((Raise) getSubstate()) {
+            case RAISING:
+                arm.moveToAngle(ArmConstants.STOW_ANGLE_deg);
+                hand.idle();
+
+                if (arm.atTarget()) {
+                    setSubstate(Raise.READY);
+                }
+                break;
+            case READY:
+                arm.moveToAngle(ArmConstants.STOW_ANGLE_deg);
+                hand.idle();
+
+                if (!arm.atTarget()) {
+                    setSubstate(Raise.RAISING);
+                }
                 break;
             default:
                 break;
@@ -314,7 +361,7 @@ public class SS extends SubsystemBase<SS.Command> {
      * @param active            true if active, false otherwise
      */
     public void setScore(Score score, boolean active) {
-        this.scoreMode = active ? score : null;
+        this.scoreMode = score;
         set(Flag.SCORE, active);
     }
 

@@ -22,12 +22,12 @@ public class ArmConstants {
 	// MOI should be similar to a rod (ie. equation should be quadratic - rod: 1/12 * m * l^2), but IDK about the SIM MOI provided since that must be a constant
 
 	// PID
-	public static final double kRotateP = 15.0;
+	public static final double kRotateP = 5.0;
 	public static final double kRotateI = 0.5;
-	public static final double kRotateD = 3.0;
-	public static final double kRotateA = 0.75;
+	public static final double kRotateD = 4.0;
+	public static final double kRotateA = 0.5;
 	public static final double kRotateG = 0.0;
-	public static final double kRotateV = 0.85;
+	public static final double kRotateV = 0.5;
 	public static final double kRotateS = 0.05;
 
 	public static final double kExtendP = 12.0;
@@ -35,7 +35,7 @@ public class ArmConstants {
 	public static final double kExtendD = 25.0;
 	public static final double kExtendA = 0.1;
 	public static final double kExtendG = 0.0;
-	public static final double kExtendV = 1.2;
+	public static final double kExtendV = 1.0;
 	public static final double kExtendS = 0.05;
 
 	public static final GravityType ROTATE_GRAVITY_TYPE = GravityType.ARM;
@@ -48,9 +48,9 @@ public class ArmConstants {
 	public static final double EXTEND_SENSOR_TO_MECHANISM_RATIO = Math.PI * EXTEND_ROLLER_DIAMETER_m * EXTEND_GEAR_RATIO;
 
 	// Motion magic
-	public static final double ROTATE_CRUISE_VELOCITY_rps = 0.5;
-	public static final double ROTATE_ACCELERATION_rps2 = 2.0;
-	public static final double ROTATE_JERK_rps3 = 8.0;
+	public static final double ROTATE_CRUISE_VELOCITY_rps = 0.25;
+	public static final double ROTATE_ACCELERATION_rps2 = 1.0;
+	public static final double ROTATE_JERK_rps3 = 4.0;
 
 	public static final double EXTEND_CRUISE_VELOCITY_mps = 1.0;
 	public static final double EXTEND_ACCELERATION_mps2 = 4.0;
@@ -79,8 +79,8 @@ public class ArmConstants {
 	public static final double SIM_MOI_kgm2 = Arrays.stream(SEGMENT_MOI_kgm2).average().orElse(0.146);
 
 	// Manual
-	public static final double MANUAL_ROTATE_VOLTS_v = 2;
-	public static final double MANUAL_EXTEND_VOLTS_v = 2;
+	public static final double MANUAL_ROTATE_VOLTS_v = 0.5;
+	public static final double MANUAL_EXTEND_VOLTS_v = 0.5;
 
 	// Intake
 	public static final double INTAKE_ANGLE_deg = -15;

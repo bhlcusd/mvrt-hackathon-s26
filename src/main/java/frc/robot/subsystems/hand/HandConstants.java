@@ -46,5 +46,5 @@ public class HandConstants {
 	public static final double SIM_MOI_kgm2 = 0.005;
 
 	// Manual
-	public static final double MANUAL_VOLTS_v = 2;
+	public static final double MANUAL_VOLTS_v = 0.5;
 }
