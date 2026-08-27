@@ -17,8 +17,10 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Threads;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.arm.Arm;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.hand.Hand;
 import frc.robot.subsystems.obstacles.ObstacleAvoidance;
 import frc.robot.subsystems.tracking.Tracking;
 import frc.robot.subsystems.vision.Vision;
@@ -35,11 +37,12 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
 
-
 public class Robot extends LoggedRobot {
 
     private Drive drive;
     private Elevator elevator;
+    private Arm arm;
+    private Hand hand;
     private Vision vision;
     private Tracking tracking;
     private ObstacleAvoidance obstacles;
@@ -117,6 +120,8 @@ public class Robot extends LoggedRobot {
         controls.update();
         superstructure.periodic();
         elevator.periodic();
+        arm.periodic();
+        hand.periodic();
         obstacles.periodic();
         tracking.periodic();
         drive.periodic();
@@ -137,6 +142,8 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void autonomousInit() {
+        vision.enable();
+        tracking.enable();
     }
 
     @Override
@@ -170,6 +177,8 @@ public class Robot extends LoggedRobot {
     
     public void instantiateSubsystems() {
         elevator = Elevator.getInstance();
+        arm = Arm.getInstance();
+        hand = Hand.getInstance();
         obstacles = ObstacleAvoidance.getInstance();
         drive = Drive.getInstance();
         vision = Vision.getInstance();

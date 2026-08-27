@@ -22,12 +22,12 @@ public final class VisionConstants {
     // pitch points the camera DOWN; an AprilTag camera is tilted UP, so the pitch is negative.
     public static final CameraConfig[] CAMERAS = {
         new CameraConfig(
-                "limelight-sean",
-                new Transform3d(
-                        new Translation3d(0.0889, -0.2794, 0.4445),
-                        new Rotation3d(0, Units.degreesToRadians(-20), 0))),
-        // new CameraConfig("limelight-back",
-        //         new Transform3d(new Translation3d(-0.1, 0.0, 0.4), new Rotation3d(0, 0, Math.PI))),
+            "limelight",
+            new Transform3d(
+                new Translation3d(0.181, -0.121, 0.322),
+                new Rotation3d(0, 0, 0)
+            )
+        )
     };
 
     // ---- Per-limelight measurement noise ----

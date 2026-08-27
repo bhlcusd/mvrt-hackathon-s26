@@ -6,17 +6,27 @@ import frc.robot.subsystems.drive.PathingOverride;
 import frc.robot.subsystems.drive.SwerveInput;
 import frc.robot.superstructure.SS;
 import frc.robot.superstructure.SS.Flag;
+import frc.robot.superstructure.SS.Manual;
+import frc.robot.superstructure.SS.Score;
 import frc.robot.util.Util;
-
 
 public class ControlScheme {
 
     private final SS ss;
     private final Drive drive;
 
+    private int scoring;
+    private static final Score[] SCORE_MODES = {Score.LOW, Score.MED, Score.HIGH};
+
+    private int manual;
+    private static final Manual[] MANUAL_MODES = {Manual.ARM_ROTATE, Manual.ARM_EXTEND, Manual.HAND_INTAKE, Manual.HAND_EXPEL};
+
     public ControlScheme(SS ss, Drive drive) {
         this.ss = ss;
         this.drive = drive;
+        
+        this.scoring = 0;
+        this.manual = 0;
     }
 
     public void init() {
@@ -43,11 +53,36 @@ public class ControlScheme {
             drive.setPathingOverride(PathingOverride.NONE);
         }
 
-        ss.set(Flag.HOME, OI.DR.getBackButton());
-        ss.set(Flag.MANUAL_UP, OI.DR.getAButton());
-        ss.set(Flag.MANUAL_DOWN, OI.DR.getBButton());
-        ss.set(Flag.SCORE_LOW, OI.DR.getXButton());
-        ss.set(Flag.SCORE_HIGH, OI.DR.getYButton());
+        // Input mapping (Xbox One controller)
+        // Left bumper - 5
+        // Right bumper - 6
+        // A - 1
+        // B - 2
+        // X - 3
+        // Y - 4
+        // Hamburger Menu - 8
+        // Mirror - 7
+        // Left joystick button -9
+        // Right joystick button - 10
 
+        // Check left bumper to increase Manual value
+        if (OI.DR.getLeftBumperButtonPressed()) {
+            manual = Math.abs(manual + 1) % MANUAL_MODES.length;
+            System.out.println("Manual is now: " + MANUAL_MODES[manual].name());
+        }
+
+        // Check right bumper to increase the scoring value
+        if (OI.DR.getRightBumperButtonPressed()) {
+            scoring = Math.abs(scoring + 1) % SCORE_MODES.length;
+            System.out.println("Score is now: " + SCORE_MODES[scoring].name());
+        }
+
+        ss.set(Flag.DISABLE, OI.DR.getRawButton(7)); // Mirror button
+        ss.set(Flag.IDLE, OI.DR.getAButton());
+        ss.set(Flag.STOW, OI.DR.getRawButton(10)); // Right joystick button
+        ss.setManual(MANUAL_MODES[manual], OI.DR.getBButton());
+        ss.set(Flag.INTAKE, OI.DR.getXButton());
+        ss.set(Flag.RAISE, OI.DR.getRawButton(9));
+        ss.setScore(SCORE_MODES[scoring], OI.DR.getYButton());
     }
 }

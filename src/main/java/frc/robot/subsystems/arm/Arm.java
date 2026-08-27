@@ -4,15 +4,14 @@ import static frc.robot.subsystems.arm.ArmConstants.*;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.robot.devices.motor.Motor;
 import frc.robot.devices.motor.MotorConfig;
 import frc.robot.subsystems.SubsystemBase;
+import frc.robot.util.Util;
 
-// NOTE: Arm extending works based off of this: the seg 3 extends first then seg 2. Seg 2 collapses before seg 3, but this doesn't matter in terms of code since we aren't tracking what segments are extended or not
-// NOTE: Also, both motors spin in the same direction, having the same adjacent gear
-
-// TODO: getPosition should return meters or radians depending on if the gear ratio is set. Figure out how you can get the correct rotations for the arm angle. Also remember to set the METERS PER ROTATION when configuring the extendConfig
 public class Arm extends SubsystemBase<Arm.Command> {
 	
 	private static Arm instance;
@@ -25,7 +24,7 @@ public class Arm extends SubsystemBase<Arm.Command> {
 	// One motor pulls the wide chain to extend/contract the Arm
 	private final Motor extendMotor;
 
-	private Arm2d arm2d = new Arm2d("arm", new Color8Bit(0, 0, 255));
+	private final Arm2d arm2d = new Arm2d("Arm", new Color8Bit(0, 0, 255));
 
 	private double targetLength_m;
 	private double targetAngle_deg;
@@ -55,23 +54,28 @@ public class Arm extends SubsystemBase<Arm.Command> {
 	private Arm() {
 		super("Arm");
 
+		this.targetAngle_deg = ArmConstants.STOW_ANGLE_deg;
+		this.targetLength_m = ArmConstants.MIN_LENGTH_m;
+		this.targetRotateVolts_v = 0;
+		this.targetExtendVolts_v = 0;
+
 		MotorConfig leftConfig = new MotorConfig(LEFT_MOTOR_ID)
 			.withCanbus(CANBUS)
 			.withBrake(BRAKE)
-			.withSensorToMechanismRatio(ROTATE_GEAR_RATIO)
+			.withSensorToMechanismRatio(ROTATE_SENSOR_TO_MECHANISM_RATIO)
 			.withFFGains(kRotateS, kRotateV, kRotateA, kRotateG)
 			.withPIDGains(kRotateP, kRotateI, kRotateD, ROTATE_GRAVITY_TYPE)
 			.withMotionMagic(ROTATE_CRUISE_VELOCITY_rps, ROTATE_ACCELERATION_rps2, ROTATE_JERK_rps3)
-			.withSim(ROTATE_SIM_MOTORS, ROTATE_GEAR_RATIO, SIM_MOI_kgm2);
+			.withSim(ROTATE_SIM_MOTORS, ROTATE_SENSOR_TO_MECHANISM_RATIO, SIM_MOI_kgm2);
 		
 		MotorConfig rightConfig = new MotorConfig(RIGHT_MOTOR_ID)
 			.withCanbus(CANBUS)
 			.withBrake(BRAKE)
-			.withSensorToMechanismRatio(ROTATE_GEAR_RATIO)
+			.withSensorToMechanismRatio(ROTATE_SENSOR_TO_MECHANISM_RATIO)
 			.withFFGains(kRotateS, kRotateV, kRotateA, kRotateG)
 			.withPIDGains(kRotateP, kRotateI, kRotateD, ROTATE_GRAVITY_TYPE)
 			.withMotionMagic(ROTATE_CRUISE_VELOCITY_rps, ROTATE_ACCELERATION_rps2, ROTATE_JERK_rps3)
-			.withSim(ROTATE_SIM_MOTORS, ROTATE_GEAR_RATIO, SIM_MOI_kgm2);
+			.withSim(ROTATE_SIM_MOTORS, ROTATE_SENSOR_TO_MECHANISM_RATIO, SIM_MOI_kgm2);
 
 		this.rotateLeftMotor = new Motor("Arm/rotateLeftMotor", leftConfig);
 		this.rotateRightMotor = new Motor("Arm/rotateRightMotor", rightConfig);
@@ -79,11 +83,11 @@ public class Arm extends SubsystemBase<Arm.Command> {
 		MotorConfig extendConfig = new MotorConfig(EXTEND_MOTOR_ID)
 			.withCanbus(CANBUS)
 			.withBrake(BRAKE)
-			.withSensorToMechanismRatio(EXTEND_GEAR_RATIO)
+			.withSensorToMechanismRatio(EXTEND_SENSOR_TO_MECHANISM_RATIO)
 			.withFFGains(kExtendS, kExtendV, kExtendA, kExtendG)
 			.withPIDGains(kExtendP, kExtendI, kExtendD, EXTEND_GRAVITY_TYPE)
 			.withMotionMagic(EXTEND_CRUISE_VELOCITY_mps, EXTEND_ACCELERATION_mps2, EXTEND_JERK_mps3)
-			.withSim(EXTEND_SIM_MOTOR, EXTEND_GEAR_RATIO, SIM_MOI_kgm2);
+			.withSim(EXTEND_SIM_MOTOR, EXTEND_SENSOR_TO_MECHANISM_RATIO, SIM_MOI_kgm2);
 
 		this.extendMotor = new Motor("Arm/ExtendMotor", extendConfig);
 
@@ -103,10 +107,13 @@ public class Arm extends SubsystemBase<Arm.Command> {
 			case DISABLED:
 				rotateLeftMotor.stop();
 				rotateRightMotor.stop();
+				extendMotor.stop();
 				break;
 			case IDLE:
-				rotateLeftMotor.setVoltage(0);
-				rotateRightMotor.setVoltage(0);
+				// Still navigate to target, otherwise it will be at some random position
+				rotateLeftMotor.setMotionMagic(Units.degreesToRotations(targetAngle_deg));
+				rotateRightMotor.setMotionMagic(Units.degreesToRotations(targetAngle_deg));
+				extendMotor.setMotionMagic(targetLength_m);
 				break;
 			case TRAVEL:
 				if (firstLoop()) {
@@ -117,8 +124,8 @@ public class Arm extends SubsystemBase<Arm.Command> {
 				// but that would mean that we would:
 				//	1. Have multiple substate enums to make it rotate and extend simultaniously (but how would we know what substate it's in without logic in Arm?)
 				//	2. Add a ROTATE and EXTEND substates (but that would make it rotate or extend, not both)
-				rotateLeftMotor.setMotionMagic(targetAngle_deg);
-				rotateRightMotor.setMotionMagic(targetAngle_deg);
+				rotateLeftMotor.setMotionMagic(Units.degreesToRotations(targetAngle_deg));
+				rotateRightMotor.setMotionMagic(Units.degreesToRotations(targetAngle_deg));
 				extendMotor.setMotionMagic(targetLength_m);
 
 				switch ((Travel) getSubstate()) {
@@ -169,9 +176,13 @@ public class Arm extends SubsystemBase<Arm.Command> {
 		setCommand(Command.IDLE);
 	}
 
+	public void stow() {
+		moveTo(ArmConstants.MIN_LENGTH_m, ArmConstants.STOW_ANGLE_deg);
+	}
+
 	public void moveTo(double length, double angle) {
-		this.targetLength_m = length;
-		this.targetAngle_deg = angle;
+		this.targetLength_m = MathUtil.clamp(length, ArmConstants.MIN_LENGTH_m, ArmConstants.MAX_LENGTH_m);
+		this.targetAngle_deg = MathUtil.clamp(angle, ArmConstants.MIN_ANGLE_deg, ArmConstants.MAX_ANGLE_deg);
 		setCommand(Command.TRAVEL);
 	}
 
@@ -184,8 +195,8 @@ public class Arm extends SubsystemBase<Arm.Command> {
 	}
 
 	public void manual(double extendVolts, double rotateVolts) {
-		this.targetExtendVolts_v = extendVolts;
-		this.targetRotateVolts_v = rotateVolts;
+		this.targetExtendVolts_v = MathUtil.clamp(extendVolts, -12, 12);
+		this.targetRotateVolts_v = MathUtil.clamp(rotateVolts, -12, 12);
 		setCommand(Command.MANUAL);
 	}
 
@@ -197,6 +208,10 @@ public class Arm extends SubsystemBase<Arm.Command> {
 		manual(this.targetExtendVolts_v, rotateVolts);
 	}
 
+	public void manualReset() {
+		manual(0, 0);
+	}
+
 	public double getLength() {
 		return extendMotor.getPosition();
 	}
@@ -206,7 +221,7 @@ public class Arm extends SubsystemBase<Arm.Command> {
 	 * to average out errors between motors.
 	 */
 	public double getAngle() {
-		return (rotateLeftMotor.getPosition() + rotateRightMotor.getPosition()) / 2;
+		return Units.rotationsToDegrees((rotateLeftMotor.getPosition() + rotateRightMotor.getPosition()) / 2);
 	}
 
 	/*
@@ -214,14 +229,18 @@ public class Arm extends SubsystemBase<Arm.Command> {
 	 * to average out errors between motors.
 	 */
 	public double getAngleVelocity() {
-		return (rotateLeftMotor.getVelocity() + rotateRightMotor.getVelocity()) / 2;
+		return Units.rotationsToDegrees((rotateLeftMotor.getVelocity() + rotateRightMotor.getVelocity()) / 2);
 	}
 
 	public boolean atRotationTarget() {
-		return Math.abs(targetAngle_deg - getAngle()) < ANGLE_TOLERANCE_deg;
+		return Util.inRange(targetAngle_deg - getAngle(), ANGLE_TOLERANCE_deg);
 	}
 
 	public boolean atExtendTarget() {
-		return Math.abs(targetLength_m - getLength()) < LENGTH_TOLERANCE_m;
+		return Util.inRange(targetLength_m - getLength(), LENGTH_TOLERANCE_m);
+	}
+
+	public boolean atTarget() {
+		return atRotationTarget() && atExtendTarget();
 	}
 }

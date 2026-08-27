@@ -31,16 +31,16 @@ public class Hand2d {
 		this.mech = new LoggedMechanism2d(0.5, 0.5);
 		
 		this.intakeLeftRoot = mech.getRoot("IntakeLeftRoot", 0.13, 0.318);
-		this.intakeLeft = intakeLeftRoot.append(new LoggedMechanismLigament2d("IntakeLeft", 0.2, 0, 2, color));
+		this.intakeLeft = intakeLeftRoot.append(new LoggedMechanismLigament2d("IntakeLeft", 0.04, 0, 2, color));
 		
 		this.intakeRightRoot = mech.getRoot("IntakeRightRoot", 0.37, 0.318);
-		this.intakeRight = intakeRightRoot.append(new LoggedMechanismLigament2d("IntakeRight", 0.2, 0, 2, color));
+		this.intakeRight = intakeRightRoot.append(new LoggedMechanismLigament2d("IntakeRight", 0.04, 0, 2, color));
 		
 		this.largeLeftRoot = mech.getRoot("LargeLeftRoot", 0.19, 0.203);
-		this.largeLeft = largeLeftRoot.append(new LoggedMechanismLigament2d("LargeRight", 0.25, 0, 3, color));
+		this.largeLeft = largeLeftRoot.append(new LoggedMechanismLigament2d("LargeRight", 0.05, 0, 3, color));
 		
 		this.largeRightRoot = mech.getRoot("LargeRightRoot", 0.31, 0.203);
-		this.largeRight = largeRightRoot.append(new LoggedMechanismLigament2d("LargeRight", 0.25, 0, 3, color));
+		this.largeRight = largeRightRoot.append(new LoggedMechanismLigament2d("LargeRight", 0.05, 0, 3, color));
 	}
 
 	/**
